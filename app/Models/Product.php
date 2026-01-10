@@ -37,19 +37,27 @@ class Product extends Model
     }
     public function getStokLengkapAttribute()
     {
-        $konversi = $this->isi_konversi ?: 1; // misal 10
-        $totalPcs = $this->stok; // misal 65
+        $konversi = $this->isi_konversi ?: 1; 
+        $totalPcs = (int) $this->stok; 
 
-        // Menghitung jumlah grosir (Ikat)
-        $ikat = floor($totalPcs / $konversi); // hasil: 6
+        // Mengambil label satuan besar dari database (default ke 'Unit' jika kosong)
+        $satuanBesar = $this->satuan_besar ?: 'Unit';
+
+        // Menghitung jumlah grosir (Satuan Besar)
+        $jumlahBesar = floor($totalPcs / $konversi);
         
         // Menghitung sisa eceran (Pcs)
-        $pcs = $totalPcs % $konversi; // hasil: 5
+        $pcs = $totalPcs % $konversi;
 
-        if ($ikat > 0 && $pcs > 0) {
-            return "{$ikat} Ikat + {$pcs} Pcs"; // Tampilan: 6 Ikat + 5 Pcs
+        // Logika Tampilan
+        if ($jumlahBesar > 0 && $pcs > 0) {
+            return "{$jumlahBesar} {$satuanBesar} + {$pcs} Pcs";
         }
         
-        return $ikat > 0 ? "{$ikat} Ikat" : "{$pcs} Pcs";
+        if ($jumlahBesar > 0) {
+            return "{$jumlahBesar} {$satuanBesar}";
+        }
+
+        return "{$pcs} Pcs";
     }
 }

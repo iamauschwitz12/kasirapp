@@ -12,11 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('penjualan_stoks', function (Blueprint $table) {
-            $table->dropColumn(['pengirim', 'asal_gudang']);
-        
+            if (Schema::hasColumn('penjualan_stoks', 'pengirim')) {
+            $table->dropColumn('pengirim');
+            }
+            
+            if (Schema::hasColumn('penjualan_stoks', 'asal_gudang')) {
+                $table->dropColumn('asal_gudang');
+            }
+    
             // Tambahkan kolom relasi baru
-            $table->foreignId('pengirim_id')->nullable()->constrained('pengirims')->onDelete('set null');
-            $table->foreignId('asal_gudang_id')->nullable()->constrained('asal_gudangs')->onDelete('set null');
+            // Gunakan if agar tidak terjadi duplikasi kolom jika dijalankan ulang
+            if (!Schema::hasColumn('penjualan_stoks', 'pengirim_id')) {
+                $table->foreignId('pengirim_id')->nullable()->constrained('pengirims')->onDelete('set null');
+            }
+            
+            if (!Schema::hasColumn('penjualan_stoks', 'asal_gudang_id')) {
+                $table->foreignId('asal_gudang_id')->nullable()->constrained('asal_gudangs')->onDelete('set null');
+            }
         });
     }
 
