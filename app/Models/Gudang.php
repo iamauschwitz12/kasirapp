@@ -14,6 +14,9 @@ class Gudang extends Model
         'cabang_id',
         'unitsatuan_id',
         'supplier_id',
+        'sisa_stok',
+        'harga_beli',  // <--- TAMBAHKAN INI
+        'total_harga',
     ];
 
     public function cabang() 

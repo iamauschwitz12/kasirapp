@@ -14,7 +14,7 @@ class Pos extends Page
         return in_array(auth()->user()->role, ['admin', 'kasir']);
     }
 
-    protected static ?string $title = 'Penjualan (Toko)';
+    protected static ?string $title = 'Kasir (Toko)';
 
     public $cart = [];
     public $total = 0;

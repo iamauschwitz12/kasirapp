@@ -10,7 +10,8 @@ class PenjualanStok extends Model
     'no_inv', 
     'asal_gudang_id', 
     'product_id', 
-    'qty', 
+    'qty',
+    'toko_id',
     'tgl_masuk'];
 
     public function pengirim() { 
@@ -21,5 +22,8 @@ class PenjualanStok extends Model
     }
     public function product() {
         return $this->belongsTo(Product::class); 
+    }
+    public function toko() {
+        return $this->belongsTo(Toko::class);
     }
 }

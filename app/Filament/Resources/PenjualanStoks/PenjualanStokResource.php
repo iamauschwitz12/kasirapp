@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Livewire\Attributes\Url;
 
 class PenjualanStokResource extends Resource
 {
@@ -21,11 +22,14 @@ class PenjualanStokResource extends Resource
         // Kasir tidak akan melihat menu ini di sidebar
         return in_array(auth()->user()->role, ['admin', 'kasir']);
     }
+
     protected static ?string $model = PenjualanStok::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
 
     protected static ?string $recordTitleAttribute = 'PenjualanStok';
+
+    protected static ?string $navigationLabel = 'Barang Masuk (Toko)';
 
     public static function form(Schema $schema): Schema
     {

@@ -29,12 +29,23 @@ class PenjualanStokForm
                 // 2. No Inv Manual
                     TextInput::make('no_inv')
                         ->label('No. Invoice')
-                        ->prefix('INV-') 
-                        // Memastikan data yang tersimpan di database tetap utuh dengan "INV-"
-                        ->dehydrateStateUsing(fn ($state) => str_starts_with($state, 'INV-') ? $state : "INV-{$state}")
-                        ->placeholder('Contoh: 2025001')
+                        ->placeholder('Contoh: INV-2025001')
                         ->maxLength(255)
-                        ->required(),
+                        ->required()
+                        ->extraInputAttributes(['style' => 'text-transform: uppercase'])
+                        ->dehydrateStateUsing(fn ($state) => strtoupper($state)),
+                    
+                    Select::make('toko_id')
+                    ->label('Toko Tujuan')
+                    ->relationship('toko', 'nama_toko') // Relasi ke tabel tokos
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->createOptionForm([ // Fitur keren: bisa tambah toko baru langsung dari sini
+                        TextInput::make('nama_toko')->required(),
+                        TextInput::make('alamat'),
+                        TextInput::make('telepon'),
+                    ]),
 
                     // 3. Asal Gudang
                     Select::make('asal_gudang_id')
@@ -50,20 +61,22 @@ class PenjualanStokForm
 
                     // 4. Kode Barcode
                     Select::make('product_id')
-                        ->label('Scan Barcode')
+                        ->label('Cari Barcode / Produk')
                         ->relationship('product', 'barcode_number')
                         ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->barcode_number} - {$record->nama_produk}")
-                    
-                        // Aktifkan pencarian untuk kedua kolom tersebut
                         ->searchable(['barcode_number', 'nama_produk'])
-                        ->preload() // Memuat data di awal agar cepat
+                        ->preload()
                         ->live()
-                        ->searchable()
-                        ->afterStateUpdated(function (Set $set, $state) {
+                        ->required()
+                        // Mengambil nama produk saat barcode dipilih
+                        ->afterStateUpdated(function (Get $get, Set $set, $state) {
                             $product = \App\Models\Product::find($state);
-                            $set('nama_barang', $product?->nama_produk);
-                        })
-                        ->required(),
+                            if ($product) {
+                                $set('nama_barang', $product->nama_produk);
+                            } else {
+                                $set('nama_barang', '');
+                            }
+                        }),
 
                     // 5. Nama Barang (Otomatis)
                     TextInput::make('nama_barang')

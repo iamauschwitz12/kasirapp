@@ -20,6 +20,10 @@ class GudangKeluarsTable
                     ->label('Toko Tujuan')
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('cabang.nama_cabang') // Menampilkan nama toko
+                    ->label('Cabang Tujuan')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('product.nama_produk')->label('Nama Barang'),
                 ViewColumn::make('product.barcode_number')
                     ->label('Barcode')

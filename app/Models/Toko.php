@@ -21,4 +21,8 @@ class Toko extends Model
     {
         return $this->hasMany(GudangKeluar::class);
     }
+    public function penjualanStoks()
+    {
+        return $this->hasMany(PenjualanStok::class);
+    }
 }

@@ -26,12 +26,6 @@ class ProductsTable
                 TextColumn::make('kode')->label('Kode Produk')->searchable()->sortable(),
                 TextColumn::make('unitSatuan.nama_satuan')->label('Satuan')->searchable()->sortable(),
                 TextColumn::make('harga')->label('Harga')->money('idr', true)->sortable(),
-                TextColumn::make('stok_lengkap') // Memanggil Accessor dari Model
-                ->label('Stok Saat Ini')
-                ->badge()
-                ->color('success')
-                // Baris di bawah ini penting agar pengurutan (sorting) tetap akurat berdasarkan angka asli
-                ->sortable(['stok']),
             ])
             ->filters([
                 //

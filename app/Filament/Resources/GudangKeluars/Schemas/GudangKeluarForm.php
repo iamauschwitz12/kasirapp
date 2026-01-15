@@ -7,6 +7,10 @@ use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
+use Closure;
+use Illuminate\Support\Facades\DB;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 
 class GudangKeluarForm
 {
@@ -35,9 +39,11 @@ class GudangKeluarForm
 
                 TextInput::make('no_referensi')
                     ->label('No. Referensi')
-                    ->prefix('OUT-')
                     ->required()
-                    ->dehydrateStateUsing(fn ($state) => str_starts_with($state, 'OUT-') ? $state : "OUT-{$state}"),
+                    ->placeholder('Contoh: OUT-2025001')
+                    ->maxLength(255)
+                    ->extraInputAttributes(['style' => 'text-transform: uppercase'])
+                    ->dehydrateStateUsing(fn ($state) => strtoupper($state)),
 
                 Select::make('product_id')
                     ->label('Scan Barcode')
@@ -64,7 +70,29 @@ class GudangKeluarForm
                     ->label('Nama Barang')->disabled()->dehydrated(false),
 
                 TextInput::make('qty')
-                    ->label('Jumlah Keluar')->numeric()->required(),
+                    ->numeric()
+                    ->required()
+                    ->rules([
+                        // Hapus "Get" di depan $get jika masih error namespace, 
+                        // atau pastikan sudah pakai namespace Utilities di atas
+                        fn ($get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
+                            $productId = $get('product_id');
+                            $cabangId = $get('cabang_id');
+
+                            if (!$productId || !$cabangId) {
+                                return;
+                            }
+
+                            $stokTersedia = DB::table('gudangs')
+                                ->where('product_id', $productId)
+                                ->where('cabang_id', $cabangId)
+                                ->sum('sisa_stok');
+
+                            if ($value > $stokTersedia) {
+                                $fail("Maaf, stok di cabang ini tidak cukup. Tersedia: {$stokTersedia}");
+                            }
+                        },
+                    ]),
 
                 Select::make('unitsatuan_id')
                     ->label('Satuan')->relationship('unitSatuan', 'nama_satuan'),

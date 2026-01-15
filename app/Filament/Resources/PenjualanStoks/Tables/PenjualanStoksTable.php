@@ -23,6 +23,10 @@ class PenjualanStoksTable
             ->columns([
                 TextColumn::make('no_inv')->label('No. Invoice'),
                 TextColumn::make('pengirim.nama_pengirim')->label('Nama Pengirim')->sortable(),
+                TextColumn::make('toko.nama_toko') // Menampilkan nama toko
+                    ->label('Toko Tujuan')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('asalGudang.nama_gudang')->label('Asal Gudang'),
                 TextColumn::make('product.nama_produk')->label('Produk'),
                 TextColumn::make('qty')

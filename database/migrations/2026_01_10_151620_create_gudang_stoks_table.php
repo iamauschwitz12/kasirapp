@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('gudangs', function (Blueprint $table) {
+        Schema::create('gudang_stoks', function (Blueprint $table) {
             $table->id();
-            $table->string('no_invoice');
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-            $table->integer('qty');
-            $table->integer('sisa_stok')->default(0);
-            $table->date('tgl_masuk');
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->decimal('jumlah_keluar', 15, 3);
+            $table->decimal('sisa_stok_akhir', 15, 3);
+            $table->string('keterangan')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('gudangs');
+        Schema::dropIfExists('gudang_stoks');
     }
 };

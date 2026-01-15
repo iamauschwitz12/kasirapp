@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('kode')->unique();
             $table->string('barcode_number')->nullable()->unique();
             $table->integer('harga');
-            $table->decimal('stok', 15, 3);
+            $table->decimal('stok', 15, 3)->nullable();
             $table->timestamps();
         });
     }
