@@ -15,7 +15,10 @@ use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables;
 use Filament\Forms;
 use Filament\Tables\Columns\Summarizers\Sum;
-
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class GudangsTable
 {
@@ -93,6 +96,29 @@ class GudangsTable
                     }
                     return $indicators;
                 }),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Export Excel')
+                    ->exports([
+                        ExcelExport::make('gudangs_masuk')
+                            // kita tidak pakai fromTable() di sini, tetapi bisa juga kombinasikan
+                            ->withColumns([
+                                Column::make('no_invoice')->heading('No. Invoice'),
+                                Column::make('supplier.nama_supplier')->heading('Nama Supplier'),
+                                Column::make('product.barcode_number')->heading('Barcode'),
+                                Column::make('cabang.nama_cabang')->heading('Cabang'),
+                                Column::make('unitSatuan.nama_satuan')->heading('Unit Satuan'),
+                                Column::make('qty')->heading('QTY Masuk'),
+                                Column::make('harga_beli')->heading('Harga Beli'),
+                                Column::make('total_harga')->heading('Total Harga'),
+                                Column::make('tgl_masuk')->heading('Tgl Masuk'),
+                                Column::make('created_at')->heading('Tanggal Input'),
+                            ])
+                            ->withFilename('gudangs_masuk-' . now()->format('Y-m-d'))
+                            ->fromTable() // jika mau sumber datanya tetap berasal dari table query (filter/search ikut)
+                            ->withChunkSize(500),
+                    ]),
             ])
             ->recordActions([
                 EditAction::make(),

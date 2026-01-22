@@ -30,6 +30,10 @@ class UsersTable
                         'kasir' => 'success',
                         'gudang' => 'primary',
                     }),
+                TextColumn::make('toko.nama_toko')
+                ->label('Lokasi Toko')
+                ->badge()
+                ->color('info'),
             ])
             ->filters([
                 //

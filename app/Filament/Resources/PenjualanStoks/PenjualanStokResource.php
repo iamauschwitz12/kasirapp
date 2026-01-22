@@ -14,9 +14,26 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Livewire\Attributes\Url;
+use Illuminate\Database\Eloquent\Builder;
 
 class PenjualanStokResource extends Resource
 {
+    // app/Filament/Resources/PenjualanStokResource.php
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Jika user BUKAN Super Admin (Anda bisa sesuaikan logika role-nya di sini)
+        // Contoh: jika Anda menggunakan Spatie Permissions: if (!$user->hasRole('super_admin'))
+        // Atau cara sederhana: jika email bukan email owner
+        if ($user->email !== 'admin@gmail.com') { 
+            return $query->where('toko_id', $user->toko_id);
+        }
+
+        // Jika Super Admin, tampilkan SEMUA data dari SEMUA toko
+        return $query;
+    }
     public static function canViewAny(): bool
     {
         // Kasir tidak akan melihat menu ini di sidebar

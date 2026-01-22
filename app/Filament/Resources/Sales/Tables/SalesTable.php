@@ -34,7 +34,7 @@ class SalesTable
             TextColumn::make('total_harga')->label('Total')->money('idr')
             ->summarize(
                     Sum::make()
-                        ->label('Total Omzet')
+                        ->label('Total Penjualan')
                         ->money('idr') // Format IDR di bagian bawah tabel
                 ),
             TextColumn::make('bayar')->label('Bayar')->money('idr'),

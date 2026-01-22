@@ -2,6 +2,12 @@
 @assets
 @include('filament.pages.pos-receipt')
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+    // Suppress Tailwind production warning
+    tailwind.config = {
+        important: true,
+    };
+</script>
 @endassets
 
 <x-filament-panels::page>

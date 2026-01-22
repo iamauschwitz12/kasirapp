@@ -20,10 +20,16 @@ class PenjualanStok extends Model
     public function asalGudang() { 
         return $this->belongsTo(AsalGudang::class); 
     }
-    public function product() {
-        return $this->belongsTo(Product::class); 
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
     }
     public function toko() {
         return $this->belongsTo(Toko::class);
+    }
+
+    public function unitSatuan()
+    {
+        return $this->belongsTo(UnitSatuan::class, 'unitsatuan_id');
     }
 }

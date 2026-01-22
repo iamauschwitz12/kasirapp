@@ -14,6 +14,12 @@ class StokGudang extends Page
     protected string $view = 'filament.pages.stok-gudang';
     protected static string | UnitEnum | null $navigationGroup = 'Gudang Manajemen';
 
+    public static function canAccess(): bool
+    {
+        // Kasir tidak akan melihat menu ini di sidebar
+        return in_array(auth()->user()->role, ['admin', 'gudang']);
+    }
+
     public $search = '';
     public $cabang_id = '';
 

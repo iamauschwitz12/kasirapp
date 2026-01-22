@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Suppliers\Schemas;
 
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
 
 class SupplierForm
 {
@@ -10,7 +11,9 @@ class SupplierForm
     {
         return $schema
             ->components([
-                //
+                TextInput::make('nama_supplier')->required(),
+                TextInput::make('kontak'),
+                TextInput::make('alamat'),
             ]);
     }
 }

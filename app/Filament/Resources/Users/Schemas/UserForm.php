@@ -40,6 +40,13 @@ class UserForm
                         // Hash password secara otomatis sebelum disimpan
                         ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                         ->dehydrated(fn ($state) => filled($state)),
+                    Select::make('toko_id')
+                        ->label('Toko Cabang')
+                        ->relationship('toko', 'nama_toko') // Mengambil data dari tabel tokos
+                        ->searchable()
+                        ->preload()
+                        ->required() // Opsional: jika semua user wajib punya toko
+                        ->placeholder('Pilih Toko untuk User ini'),
 
                     Select::make('role')
                         ->label('Hak Akses / Role')

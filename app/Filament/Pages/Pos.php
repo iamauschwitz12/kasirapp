@@ -6,9 +6,14 @@ use Filament\Pages\Page;
 use App\Models\Product;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\DB;
+use App\Models\PenjualanStok;
+use App\Models\Sale;
+use App\Models\SaleItem;
 
 class Pos extends Page
 {
+    public bool $isProcessing = false; // Tambahkan ini di deretan properti atas
+
     public static function canAccess(): bool
     {
         return in_array(auth()->user()->role, ['admin', 'kasir']);
@@ -23,26 +28,38 @@ class Pos extends Page
     // Tambahkan ini untuk memaksa sinkronisasi
     protected $listeners = ['refreshComponent' => '$refresh'];
     
+    // app/Filament/Pages/Pos.php
+
+    public $selectedTokoId;
+
+    public function mount()
+    {
+        // Bersihkan cache pencarian produk sebelumnya
+        $this->selectedTokoId = auth()->user()->toko_id;
+        $this->cart = []; 
+        // Paksa refresh data
+        unset($this->products);
+    }
+    public function updatedSelectedTokoId()
+    {
+        // Menghapus cache computed property agar fungsi products() dijalankan ulang
+        unset($this->products);
+    }
+
+    // Gunakan fungsi ini untuk menggantikan pemanggilan products() di Blade khusus untuk Admin
+
     public function updatedSearch($value)
     {
-        // Jika input pencarian terlalu pendek, abaikan (untuk performa)
-        if (strlen($value) < 3) return;
+        if (strlen($value) < 1) return;
 
-        // Cari produk yang barcode_name nya SAMA PERSIS (100% match)
-        $product = \App\Models\Product::where('barcode_name', $value)->first();
+        // Cari berdasarkan barcode_number atau kode produk
+        $product = Product::where('barcode_number', $value)
+                        ->orWhere('kode', $value)
+                        ->first();
 
         if ($product) {
-            // Jika ditemukan, langsung panggil fungsi addToCart
             $this->addToCart($product->id);
-
-            // Kosongkan kembali kolom pencarian agar siap scan barang berikutnya
             $this->reset('search');
-
-            // Opsional: Berikan notifikasi suara atau pesan kecil (pake dispatch)
-            $this->dispatch('notify', [
-                'message' => 'Barang ditambahkan: ' . $product->nama_produk,
-                'type' => 'success'
-            ]);
         }
     }
 
@@ -54,95 +71,101 @@ class Pos extends Page
     {
         $this->kembalian = (int)$this->bayar - (int)$this->total;
     }
+
+    // Saat cart diupdate, reset bayar dan kembalian
+    public function updatedCart()
+    {
+        $this->calculateTotal();
+        $this->bayar = 0;
+        $this->kembalian = 0;
+    }
     
     public function checkout()
     {
-        // 1. Sinkronkan total harga terlebih dahulu
-        $this->updatedCart();
+        if ($this->isProcessing) return;
+        $this->isProcessing = true;
 
-        // Validasi jika total nol atau keranjang kosong
-        if (count($this->cart) === 0 || $this->total <= 0) {
-            $this->dispatch('notify', [
-                'message' => 'Keranjang kosong atau total tidak valid!',
-                'type' => 'danger'
-            ]);
+        // Pastikan total sinkron sebelum bayar
+        $this->total = collect($this->cart)->sum('subtotal');
+
+        if (count($this->cart) === 0) {
+            $this->isProcessing = false;
             return;
         }
 
-        // Validasi Pembayaran (Cegah bayar kurang)
         if ((float)$this->bayar < $this->total) {
-            $this->dispatch('notify', [
-                'message' => 'Uang bayar tidak cukup!',
-                'type' => 'danger'
-            ]);
+            $this->dispatch('notify', ['message' => 'Uang tidak cukup!', 'type' => 'danger']);
+            $this->isProcessing = false;
             return;
         }
 
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
-            // 2. GENERATE NOMOR TRANSAKSI
-            $today = date('Ymd');
-            $count = \App\Models\Sale::whereDate('created_at', date('Y-m-d'))->count() + 1;
-            $nomor_transaksi = 'TRX-' . $today . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $targetTokoId = (auth()->user()->email === 'admin@gmail.com') 
+                            ? $this->selectedTokoId 
+                            : auth()->user()->toko_id;
 
-            // 3. HITUNG NILAI AKHIR
-            $totalHarga = (float) $this->total;
-            $uangBayar = (float) $this->bayar;
-            $kembalian = $uangBayar - $totalHarga;
-
-            // 4. SIMPAN TRANSAKSI UTAMA (SALES)
-            $newSale = \App\Models\Sale::create([
-                'nomor_transaksi' => $nomor_transaksi,
-                'total_harga'     => $totalHarga,
-                'bayar'           => $uangBayar,
-                'kembalian'       => $kembalian,
+            $newSale = Sale::create([
+                'nomor_transaksi' => 'TRX-' . date('YmdHis'),
+                'total_harga'     => (float) $this->total,
+                'bayar'           => (float) $this->bayar,
+                'kembalian'       => (float)$this->bayar - (float)$this->total,
                 'user_id'         => auth()->id(),
+                'toko_id'         => $targetTokoId,
             ]);
 
-            // 5. SIMPAN ITEM & POTONG STOK
             foreach ($this->cart as $item) {
-                // CARI PRODUK DULU (Penting: harus sebelum logika stok)
-                $product = \App\Models\Product::find($item['product_id']);
-                
-                if ($product) {
-                    // Hitung Qty dalam PCS (Satuan terkecil)
-                    $qtyPcs = ($item['satuan_pilihan'] === 'grosir') 
-                        ? (int)$item['qty'] * (int)($product->isi_konversi ?: 1)
-                        : (int)$item['qty'];
+                $qtyPcs = (int)$item['qty'] * (int)($item['konversi'] ?: 1);
 
-                    // POTONG STOK (Hanya sekali panggil)
-                    $product->decrement('stok', $qtyPcs);
+                // Kurangi stok dari penjualan_stoks secara urut (FIFO)
+                $stokRecords = DB::table('penjualan_stoks')
+                    ->where('product_id', $item['product_id'])
+                    ->where('toko_id', $targetTokoId)
+                    ->orderBy('id', 'asc')
+                    ->get();
 
-                    // SIMPAN DETAIL ITEM
-                    $newSale->items()->create([
-                        'product_id'     => $item['product_id'],
-                        'qty'            => $item['qty'],
-                        'nama_satuan'    => $item['nama_satuan'],
-                        'satuan_pilihan' => $item['satuan_pilihan'],
-                        'harga_saat_ini' => $item['harga'],
-                        'subtotal'       => (float)$item['qty'] * (float)$item['harga'],
-                    ]);
+                $sisaQty = $qtyPcs;
+                foreach ($stokRecords as $stokRecord) {
+                    if ($sisaQty <= 0) break;
+
+                    $qtyYangDikurangi = min($sisaQty, $stokRecord->qty);
+                    
+                    DB::table('penjualan_stoks')
+                        ->where('id', $stokRecord->id)
+                        ->decrement('qty', $qtyYangDikurangi);
+                    
+                    $sisaQty -= $qtyYangDikurangi;
                 }
+
+                $newSale->items()->create([
+                    'product_id'     => $item['product_id'],
+                    'qty'            => $item['qty'],
+                    'nama_satuan'    => $item['nama_satuan'],
+                    'satuan_pilihan' => $item['satuan_pilihan'],
+                    'harga_saat_ini' => $item['harga'],
+                    'subtotal'       => (float)$item['subtotal'],
+                ]);
             }
 
-            \DB::commit();
+            DB::commit();
 
-            // 6. DISPATCH & RESET
-            $this->dispatch('notify', ['message' => 'Transaksi Berhasil!', 'type' => 'success']);
-            
-            // Buka Tab Cetak Struk
+            $this->dispatch('close-modal', id: 'modal-pembayaran');
+            $this->dispatch('notify', ['message' => 'Berhasil!', 'type' => 'success']);
             $this->dispatch('open-print-window', url: route('print.struk', ['id' => $newSale->id]));
 
-            // Bersihkan Form
-            $this->reset(['cart', 'total', 'bayar']);
-
+            // Reset serentak
+            $this->cart = [];
+            $this->total = 0;
+            $this->bayar = 0;
+            $this->kembalian = 0;
+            unset($this->products);
+            
         } catch (\Exception $e) {
-            \DB::rollBack();
-            $this->dispatch('notify', [
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
-                'type' => 'danger'
-            ]);
+            DB::rollBack();
+            $this->dispatch('notify', ['message' => 'Gagal: ' . $e->getMessage(), 'type' => 'danger']);
+        } finally {
+            $this->isProcessing = false;
         }
     }
 
@@ -182,40 +205,62 @@ class Pos extends Page
     #[Computed]
     public function products()
     {
-        
-        return \App\Models\Product::with('unitSatuan') // Load relasi satuan
-        ->where('nama_produk', 'like', '%' . $this->search . '%')
-        ->orWhere('barcode_number', $this->search)
-        ->limit(20)
-        ->get();
+        $user = auth()->user();
+        $isAdmin = $user->email === 'admin@gmail.com';
+        $tokoId = $isAdmin ? ($this->selectedTokoId ?? $user->toko_id) : $user->toko_id;
+
+        if (!$tokoId) return [];
+
+        // Ambil stok yang sudah digabung (SUM)
+        $query = \App\Models\PenjualanStok::query()
+            ->select('product_id', \DB::raw('SUM(qty) as total_qty'))
+            ->with(['product'])
+            ->where('toko_id', $tokoId)
+            ->groupBy('product_id')
+            ->get();
 
         $results = [];
 
-        foreach ($query as $product) {
-            // 1. Tambahkan Pilihan Grosir (Misal: Kotak)
-            if ($product->harga_grosir > 0) {
-                $results[] = (object) [
-                    'id' => $product->id,
-                    'unique_key' => $product->id . '-grosir', // Kunci unik untuk Livewire
-                    'nama_produk' => $product->nama_produk . ' (' . $product->satuan_besar . ')',
-                    'harga' => $product->harga_grosir,
-                    'stok' => floor($product->stok / $product->isi_konversi), // Tampilkan stok dalam satuan besar
-                    'satuan' => $product->satuan_besar,
-                    'tipe' => 'grosir',
-                    'konversi' => $product->isi_konversi
-                ];
+        foreach ($query as $stokItem) {
+            $product = $stokItem->product;
+            if (!$product) continue;
+
+            // Filter Search
+            if (!empty($this->search)) {
+                $searchLower = strtolower($this->search);
+                if (!str_contains(strtolower($product->nama_produk), $searchLower) && 
+                    !str_contains($product->barcode_number, $searchLower)) {
+                    continue;
+                }
             }
 
-            // 2. Tambahkan Pilihan Eceran (Misal: Pcs)
+            $totalPcs = (int) $stokItem->total_qty;
+            $konversi = (int) ($product->isi_konversi ?: 1);
+
+            // Logika Hitung Satuan Lengkap
+            $jumlahBesar = floor($totalPcs / $konversi);
+            $sisaEceran = $totalPcs % $konversi;
+            $satuanBesar = $product->satuan_besar ?? 'Kotak';
+            $satuanKecil = $product->satuan_kecil ?? 'Pcs';
+
+            $stokInformatif = ($konversi > 1) 
+                ? "{$jumlahBesar} {$satuanBesar} + {$sisaEceran} {$satuanKecil}"
+                : "{$totalPcs} {$satuanKecil}";
+
+            // Hanya masukkan SATU objek per produk
             $results[] = (object) [
-                'id' => $product->id,
-                'unique_key' => $product->id . '-eceran',
-                'nama_produk' => $product->nama_produk . ' (Pcs)',
-                'harga' => $product->harga, // Ini harga eceran
-                'stok' => $product->stok,
-                'satuan' => $product->unitSatuan->nama_satuan ?? 'Pcs',
-                'tipe' => 'eceran',
-                'konversi' => 1
+                'id'            => $product->id, // Kita gunakan ini sebagai kunci
+                'nama_produk'   => $product->nama_produk,
+                'stok'          => (int) $totalPcs,
+                'stok_lengkap'  => $stokInformatif,
+                'harga_ecer'    => (float) $product->harga,
+                'harga'         => (float) $product->harga,
+                'harga_grosir'  => (float) $product->harga_grosir,
+                'satuan_besar'  => $satuanBesar,
+                'satuan_kecil'  => $satuanKecil,
+                'has_grosir'    => $product->harga_grosir > 0,
+                'isi_konversi'  => (int) $konversi, // <--- Tambahkan ini
+                'satuan'        => $satuanKecil,
             ];
         }
 
@@ -226,11 +271,7 @@ class Pos extends Page
      * Menghitung Total Harga
      * Diakses di blade dengan $this->total
      */
-    #[Computed]
-    public function total()
-    {
-        return collect($this->cart)->sum(fn($item) => $item['harga'] * $item['qty']);
-    }
+
 
     #[Computed] 
     public function totalQty()
@@ -238,30 +279,43 @@ class Pos extends Page
         return collect($this->cart)->sum('qty');
     }
 
-    public function addToCart($productId)
+    public function addToCart($productId, $tipe = 'eceran')
     {
-        $product = \App\Models\Product::find($productId);
-        $satuanAwal = 'eceran'; // Default saat klik pertama kali
-        $cartKey = $productId . '_' . $satuanAwal;
+        $productData = collect($this->products)->firstWhere('id', $productId);
+        if (!$productData) return;
 
-        $index = collect($this->cart)->search(fn($item) => $item['cart_key'] === $cartKey);
+        $cartKey = $productId . '_' . $tipe;
+        $index = collect($this->cart)->search(fn($item) => ($item['cart_key'] ?? '') === $cartKey);
 
         if ($index !== false) {
             $this->cart[$index]['qty']++;
-            $this->cart[$index]['subtotal'] = $this->cart[$index]['qty'] * $this->cart[$index]['harga'];
+            // Pastikan subtotal dihitung ulang di sini
+            $this->cart[$index]['subtotal'] = (float)$this->cart[$index]['qty'] * (float)$this->cart[$index]['harga'];
         } else {
+            $harga = ($tipe === 'grosir') ? $productData->harga_grosir : $productData->harga_ecer;
+            $konversi = ($tipe === 'grosir') ? (int)$productData->isi_konversi : 1;
+
             $this->cart[] = [
-                'cart_key' => $cartKey,
-                'product_id' => $product->id,
-                'nama_produk' => $product->nama_produk,
-                'qty' => 1,
-                'harga' => $product->harga,
-                'nama_satuan' => $product->satuan_kecil,
-                'satuan_pilihan' => $satuanAwal,
-                'subtotal' => $product->harga,
+                'cart_key'       => $cartKey,
+                'product_id'     => $productId,
+                'nama_produk'    => $productData->nama_produk,
+                'qty'            => 1,
+                'harga'          => (float)$harga,
+                'nama_satuan'    => ($tipe === 'grosir') ? $productData->satuan_besar : $productData->satuan_kecil,
+                'satuan_pilihan' => $tipe,
+                'konversi'       => $konversi,
+                'subtotal'       => (float)$harga, // Harga langsung muncul karena subtotal sudah diisi
             ];
         }
-        $this->updatedCart();
+
+        // PAKSA HITUNG TOTAL KESELURUHAN
+        $this->calculateTotal();
+    }
+
+    // Tambahkan fungsi pembantu ini jika belum ada
+    public function calculateTotal()
+    {
+        $this->total = collect($this->cart)->sum('subtotal');
     }
 
     public function toggleSatuan($index, $satuanBaru)
@@ -298,29 +352,28 @@ class Pos extends Page
             $this->cart[$index]['subtotal'] = $this->cart[$index]['qty'] * $hargaBaru;
         }
 
-        $this->updatedCart(); // Update total tagihan
+        $this->calculateTotal(); // Update total tagihan
     }
 
-    public function increaseQty(int $index) // Tambahkan 'int' di sini
+    public function increaseQty($index)
     {
         if (isset($this->cart[$index])) {
             $this->cart[$index]['qty']++;
+            $this->cart[$index]['subtotal'] = (float)$this->cart[$index]['qty'] * (float)$this->cart[$index]['harga'];
             $this->calculateTotal();
         }
     }
 
-    public function decreaseQty(int $index) // Tambahkan 'int' di sini
+    public function decreaseQty($index)
     {
         if (isset($this->cart[$index])) {
             if ($this->cart[$index]['qty'] > 1) {
                 $this->cart[$index]['qty']--;
+                $this->cart[$index]['subtotal'] = (float)$this->cart[$index]['qty'] * (float)$this->cart[$index]['harga'];
             } else {
-                unset($this->cart[$index]);
-                $this->cart = array_values($this->cart);
+                // Jika sisa 1 dan dikurang lagi, hapus dari keranjang
+                $this->removeFromCart($index);
             }
-            
-            // Pemicu re-render
-            $this->cart = $this->cart;
             $this->calculateTotal();
         }
     }
@@ -338,29 +391,5 @@ class Pos extends Page
         
         $this->dispatch('notify', ['message' => 'Produk dihapus', 'type' => 'info']);
     }
-    }
-    public function updatedCart()
-    {
-        $this->total = collect($this->cart)->sum(function ($item) {
-            return (float)($item['harga'] * $item['qty']);
-        });
-    }
-
-    public function calculateTotal()
-    {
-        $this->total = collect($this->cart)->sum(function ($item) {
-            return (float)$item['qty'] * (float)$item['harga'];
-        });
-    }
-    public function updateQty($index, $operator)
-    {
-        if ($operator == '+') {
-            $this->cart[$index]['qty']++;
-        } else {
-            if ($this->cart[$index]['qty'] > 1) $this->cart[$index]['qty']--;
-        }
-        
-        // Selalu hitung ulang subtotal setelah Qty berubah
-        $this->cart[$index]['subtotal'] = $this->cart[$index]['qty'] * $this->cart[$index]['harga'];
     }
 }

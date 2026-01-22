@@ -70,4 +70,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Sale::class);
     }
+    public function toko()
+    {
+        return $this->belongsTo(Toko::class, 'toko_id');
+    }
 }
