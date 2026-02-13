@@ -42,7 +42,7 @@ class PenjualanStokResource extends Resource
 
     protected static ?string $model = PenjualanStok::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFolderPlus;
 
     protected static ?string $recordTitleAttribute = 'PenjualanStok';
 

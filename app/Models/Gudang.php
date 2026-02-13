@@ -15,11 +15,16 @@ class Gudang extends Model
         'unitsatuan_id',
         'supplier_id',
         'sisa_stok',
-        'harga_beli',  // <--- TAMBAHKAN INI
+        'harga_beli',
         'total_harga',
+        'user_id',
     ];
 
-    public function cabang() 
+    protected $casts = [
+        'tgl_masuk' => 'date',
+    ];
+
+    public function cabang()
     {
         return $this->belongsTo(Cabang::class);
     }
@@ -34,7 +39,13 @@ class Gudang extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function supplier() {
+    public function supplier()
+    {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

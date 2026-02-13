@@ -4,22 +4,24 @@
             <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px; color: black;">
                 {{ $record->nama_produk }}
             </div>
-            
-            <div style="display: flex; justify-content: center; margin-bottom: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+
+            <div
+                style="display: flex; justify-content: center; margin-bottom: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                 {!! DNS1D::getBarcodeHTML($record->barcode_number ?? $record->kode, 'C128', 2, 60, 'black', true) !!}
             </div>
-            
-            <div style="font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 3px; color: black; font-weight: bold;">
+            <div
+                style="margin-top: 5px; display: flex; justify-content: center; gap: 10px; font-size: 12px; color: black; font-weight: bold; font-family: Arial, sans-serif;">
+                <div>Eceran: Rp {{ number_format($record->harga, 0, ',', '.') }}</div>
+                <div>Grosir: Rp {{ number_format($record->harga_grosir, 0, ',', '.') }}</div>
+            </div>
+            <div
+                style="font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 3px; color: black; font-weight: bold;">
                 {{ $record->barcode_number ?? $record->kode }}
             </div>
         </div>
     </div>
 
-    <x-filament::button 
-        color="success" 
-        icon="heroicon-m-printer"
-        class="mt-6"
-        x-on:click="
+    <x-filament::button color="success" icon="heroicon-m-printer" class="mt-6" x-on:click="
             const content = document.getElementById('barcode-print-content-{{ $record->id }}').innerHTML;
             const printWindow = window.open('', '_blank', 'height=600,width=800');
             printWindow.document.write('<html><head><title>Cetak Barcode</title>');

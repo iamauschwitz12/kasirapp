@@ -16,4 +16,11 @@ class ListGudangs extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            //
+        ];
+    }
 }

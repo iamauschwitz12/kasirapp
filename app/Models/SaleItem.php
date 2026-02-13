@@ -8,13 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SaleItem extends Model
 {
     protected $fillable = [
-        'sale_id', 
-        'product_id', 
-        'qty', 
-        'harga_saat_ini', 
+        'sale_id',
+        'product_id',
+        'qty',
+        'harga_saat_ini',
         'subtotal',
         'nama_satuan',
         'satuan_pilihan',
+        'discount',
+        'discount_amount',
+        'subtotal_before_discount',
     ];
 
     /**

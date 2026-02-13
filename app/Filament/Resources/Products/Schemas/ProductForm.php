@@ -50,26 +50,6 @@ class ProductForm
                         ->required()
                         ->live() // Memantau perubahan secara real-time
                         ->helperText('Contoh: 1 Kotak isi 10 Pcs, maka isi 10'),
-                TextInput::make('input_satuan_besar')
-                    ->label('Jumlah Masuk')
-                    ->numeric()
-                    ->live()
-                    ->dehydrated(false)
-                    // HAPUS "Set $set" dan "Get $get", ganti jadi "$set" dan "$get" saja
-                    ->afterStateUpdated(function ($set, $get, $state) { 
-                        $konversi = (int) $get('isi_konversi') ?: 1;
-                        
-                        // Melakukan perhitungan
-                        $hasil = (int) $state * $konversi;
-                        
-                        // Mengisi field stok
-                        $set('stok', $hasil);
-                    }),
-                TextInput::make('stok')
-                    ->label('Total Stok (Pcs)')
-                    ->numeric()
-                    ->live() // Tambahkan ini agar reaktif
-                    ->readOnly(),
             ]);
     }
 }

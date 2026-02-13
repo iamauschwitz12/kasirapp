@@ -14,9 +14,30 @@ class Pos extends Page
 {
     public bool $isProcessing = false; // Tambahkan ini di deretan properti atas
 
+    public function getMaxContentWidth(): \Filament\Support\Enums\Width|string|null
+    {
+        return 'full';
+    }
+
     public static function canAccess(): bool
     {
         return in_array(auth()->user()->role, ['admin', 'kasir']);
+    }
+
+    public static function getNavigationItems(): array
+    {
+        if (!static::canAccess()) {
+            return [];
+        }
+
+        return [
+            \Filament\Navigation\NavigationItem::make(static::getNavigationLabel())
+                ->group(static::getNavigationGroup())
+                ->icon(static::getNavigationIcon() ?? 'heroicon-o-computer-desktop')
+                ->isActiveWhen(fn() => request()->routeIs(static::getRouteName()))
+                ->sort(static::getNavigationSort())
+                ->url(static::getNavigationUrl(), shouldOpenInNewTab: true),
+        ];
     }
 
     protected static ?string $title = 'Kasir (Toko)';
@@ -27,7 +48,7 @@ class Pos extends Page
 
     // Tambahkan ini untuk memaksa sinkronisasi
     protected $listeners = ['refreshComponent' => '$refresh'];
-    
+
     // app/Filament/Pages/Pos.php
 
     public $selectedTokoId;
@@ -36,7 +57,7 @@ class Pos extends Page
     {
         // Bersihkan cache pencarian produk sebelumnya
         $this->selectedTokoId = auth()->user()->toko_id;
-        $this->cart = []; 
+        $this->cart = [];
         // Paksa refresh data
         unset($this->products);
     }
@@ -50,12 +71,13 @@ class Pos extends Page
 
     public function updatedSearch($value)
     {
-        if (strlen($value) < 1) return;
+        if (strlen($value) < 1)
+            return;
 
         // Cari berdasarkan barcode_number atau kode produk
         $product = Product::where('barcode_number', $value)
-                        ->orWhere('kode', $value)
-                        ->first();
+            ->orWhere('kode', $value)
+            ->first();
 
         if ($product) {
             $this->addToCart($product->id);
@@ -69,20 +91,46 @@ class Pos extends Page
     // Gunakan updatedBayar untuk menghitung kembalian secara otomatis saat input berubah
     public function updatedBayar()
     {
-        $this->kembalian = (int)$this->bayar - (int)$this->total;
+        $this->kembalian = (int) $this->bayar - (int) $this->total;
     }
 
     // Saat cart diupdate, reset bayar dan kembalian
-    public function updatedCart()
+    public function updatedCart($value, $key)
     {
+        // Handle nested property updates like cart.0.qty
+        // $key will be something like "0.qty"
+        if (str_contains($key, '.qty')) {
+            $index = (int) explode('.', $key)[0];
+
+            if (isset($this->cart[$index])) {
+                // Ensure qty is at least 1
+                if ($this->cart[$index]['qty'] < 1) {
+                    $this->cart[$index]['qty'] = 1;
+                }
+
+                // Recalculate subtotal for this item with discount
+                $this->recalculateItemSubtotal($index);
+            }
+        } elseif (str_contains($key, '.discount')) {
+            $index = (int) explode('.', $key)[0];
+            if (isset($this->cart[$index])) {
+                $this->recalculateItemSubtotal($index);
+            }
+        }
+
+        // Recalculate total
         $this->calculateTotal();
-        $this->bayar = 0;
-        $this->kembalian = 0;
+
+        // Update kembalian if bayar is already set
+        if ($this->bayar > 0) {
+            $this->kembalian = (int) $this->bayar - (int) $this->total;
+        }
     }
-    
+
     public function checkout()
     {
-        if ($this->isProcessing) return;
+        if ($this->isProcessing)
+            return;
         $this->isProcessing = true;
 
         // Pastikan total sinkron sebelum bayar
@@ -93,7 +141,7 @@ class Pos extends Page
             return;
         }
 
-        if ((float)$this->bayar < $this->total) {
+        if ((float) $this->bayar < $this->total) {
             $this->dispatch('notify', ['message' => 'Uang tidak cukup!', 'type' => 'danger']);
             $this->isProcessing = false;
             return;
@@ -102,21 +150,21 @@ class Pos extends Page
         try {
             DB::beginTransaction();
 
-            $targetTokoId = (auth()->user()->email === 'admin@gmail.com') 
-                            ? $this->selectedTokoId 
-                            : auth()->user()->toko_id;
+            $targetTokoId = (auth()->user()->email === 'admin@gmail.com')
+                ? $this->selectedTokoId
+                : auth()->user()->toko_id;
 
             $newSale = Sale::create([
                 'nomor_transaksi' => 'TRX-' . date('YmdHis'),
-                'total_harga'     => (float) $this->total,
-                'bayar'           => (float) $this->bayar,
-                'kembalian'       => (float)$this->bayar - (float)$this->total,
-                'user_id'         => auth()->id(),
-                'toko_id'         => $targetTokoId,
+                'total_harga' => (float) $this->total,
+                'bayar' => (float) $this->bayar,
+                'kembalian' => (float) $this->bayar - (float) $this->total,
+                'user_id' => auth()->id(),
+                'toko_id' => $targetTokoId,
             ]);
 
             foreach ($this->cart as $item) {
-                $qtyPcs = (int)$item['qty'] * (int)($item['konversi'] ?: 1);
+                $qtyPcs = (int) $item['qty'] * (int) ($item['konversi'] ?: 1);
 
                 // Kurangi stok dari penjualan_stoks secara urut (FIFO)
                 $stokRecords = DB::table('penjualan_stoks')
@@ -127,24 +175,28 @@ class Pos extends Page
 
                 $sisaQty = $qtyPcs;
                 foreach ($stokRecords as $stokRecord) {
-                    if ($sisaQty <= 0) break;
+                    if ($sisaQty <= 0)
+                        break;
 
                     $qtyYangDikurangi = min($sisaQty, $stokRecord->qty);
-                    
+
                     DB::table('penjualan_stoks')
                         ->where('id', $stokRecord->id)
                         ->decrement('qty', $qtyYangDikurangi);
-                    
+
                     $sisaQty -= $qtyYangDikurangi;
                 }
 
                 $newSale->items()->create([
-                    'product_id'     => $item['product_id'],
-                    'qty'            => $item['qty'],
-                    'nama_satuan'    => $item['nama_satuan'],
+                    'product_id' => $item['product_id'],
+                    'qty' => $item['qty'],
+                    'nama_satuan' => $item['nama_satuan'],
                     'satuan_pilihan' => $item['satuan_pilihan'],
                     'harga_saat_ini' => $item['harga'],
-                    'subtotal'       => (float)$item['subtotal'],
+                    'discount' => $item['discount'] ?? 0,
+                    'discount_amount' => $item['discount_amount'] ?? 0,
+                    'subtotal_before_discount' => $item['subtotal_before_discount'] ?? ($item['qty'] * $item['harga']),
+                    'subtotal' => (float) $item['subtotal'],
                 ]);
             }
 
@@ -160,7 +212,7 @@ class Pos extends Page
             $this->bayar = 0;
             $this->kembalian = 0;
             unset($this->products);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('notify', ['message' => 'Gagal: ' . $e->getMessage(), 'type' => 'danger']);
@@ -173,13 +225,13 @@ class Pos extends Page
     {
         // Cari produk berdasarkan barcode_number atau kode unik
         $product = \App\Models\Product::with('unitSatuan')
-                ->where('barcode_number', $barcode)
-                ->orWhere('kode', $barcode)
-                ->first();
+            ->where('barcode_number', $barcode)
+            ->orWhere('kode', $barcode)
+            ->first();
 
         if ($product) {
             $this->addToCart($product->id);
-            
+
             // Kirim notifikasi sukses (Opsional)
             $this->js('new Audio("/sounds/beep.mp3").play();'); // Bunyi beep jika ada file suaranya
         } else {
@@ -189,7 +241,7 @@ class Pos extends Page
                 ->danger()
                 ->send();
         }
-        
+
         // Reset input pencarian setelah scan
         $this->search = '';
     }
@@ -209,7 +261,8 @@ class Pos extends Page
         $isAdmin = $user->email === 'admin@gmail.com';
         $tokoId = $isAdmin ? ($this->selectedTokoId ?? $user->toko_id) : $user->toko_id;
 
-        if (!$tokoId) return [];
+        if (!$tokoId)
+            return [];
 
         // Ambil stok yang sudah digabung (SUM)
         $query = \App\Models\PenjualanStok::query()
@@ -223,13 +276,16 @@ class Pos extends Page
 
         foreach ($query as $stokItem) {
             $product = $stokItem->product;
-            if (!$product) continue;
+            if (!$product)
+                continue;
 
             // Filter Search
             if (!empty($this->search)) {
                 $searchLower = strtolower($this->search);
-                if (!str_contains(strtolower($product->nama_produk), $searchLower) && 
-                    !str_contains($product->barcode_number, $searchLower)) {
+                if (
+                    !str_contains(strtolower($product->nama_produk), $searchLower) &&
+                    !str_contains($product->barcode_number, $searchLower)
+                ) {
                     continue;
                 }
             }
@@ -243,24 +299,24 @@ class Pos extends Page
             $satuanBesar = $product->satuan_besar ?? 'Kotak';
             $satuanKecil = $product->satuan_kecil ?? 'Pcs';
 
-            $stokInformatif = ($konversi > 1) 
+            $stokInformatif = ($konversi > 1)
                 ? "{$jumlahBesar} {$satuanBesar} + {$sisaEceran} {$satuanKecil}"
                 : "{$totalPcs} {$satuanKecil}";
 
             // Hanya masukkan SATU objek per produk
             $results[] = (object) [
-                'id'            => $product->id, // Kita gunakan ini sebagai kunci
-                'nama_produk'   => $product->nama_produk,
-                'stok'          => (int) $totalPcs,
-                'stok_lengkap'  => $stokInformatif,
-                'harga_ecer'    => (float) $product->harga,
-                'harga'         => (float) $product->harga,
-                'harga_grosir'  => (float) $product->harga_grosir,
-                'satuan_besar'  => $satuanBesar,
-                'satuan_kecil'  => $satuanKecil,
-                'has_grosir'    => $product->harga_grosir > 0,
-                'isi_konversi'  => (int) $konversi, // <--- Tambahkan ini
-                'satuan'        => $satuanKecil,
+                'id' => $product->id, // Kita gunakan ini sebagai kunci
+                'nama_produk' => $product->nama_produk,
+                'stok' => (int) $totalPcs,
+                'stok_lengkap' => $stokInformatif,
+                'harga_ecer' => (float) $product->harga,
+                'harga' => (float) $product->harga,
+                'harga_grosir' => (float) $product->harga_grosir,
+                'satuan_besar' => $satuanBesar,
+                'satuan_kecil' => $satuanKecil,
+                'has_grosir' => $product->harga_grosir > 0,
+                'isi_konversi' => (int) $konversi, // <--- Tambahkan ini
+                'satuan' => $satuanKecil,
             ];
         }
 
@@ -273,7 +329,7 @@ class Pos extends Page
      */
 
 
-    #[Computed] 
+    #[Computed]
     public function totalQty()
     {
         return collect($this->cart)->sum('qty');
@@ -282,29 +338,37 @@ class Pos extends Page
     public function addToCart($productId, $tipe = 'eceran')
     {
         $productData = collect($this->products)->firstWhere('id', $productId);
-        if (!$productData) return;
+        if (!$productData)
+            return;
 
         $cartKey = $productId . '_' . $tipe;
         $index = collect($this->cart)->search(fn($item) => ($item['cart_key'] ?? '') === $cartKey);
 
         if ($index !== false) {
             $this->cart[$index]['qty']++;
-            // Pastikan subtotal dihitung ulang di sini
-            $this->cart[$index]['subtotal'] = (float)$this->cart[$index]['qty'] * (float)$this->cart[$index]['harga'];
+            // Pastikan subtotal dihitung ulang di sini dengan discount
+            $this->recalculateItemSubtotal($index);
         } else {
             $harga = ($tipe === 'grosir') ? $productData->harga_grosir : $productData->harga_ecer;
-            $konversi = ($tipe === 'grosir') ? (int)$productData->isi_konversi : 1;
+            $konversi = ($tipe === 'grosir') ? (int) $productData->isi_konversi : 1;
+            $subtotal_before_discount = (float) $harga;
 
             $this->cart[] = [
-                'cart_key'       => $cartKey,
-                'product_id'     => $productId,
-                'nama_produk'    => $productData->nama_produk,
-                'qty'            => 1,
-                'harga'          => (float)$harga,
-                'nama_satuan'    => ($tipe === 'grosir') ? $productData->satuan_besar : $productData->satuan_kecil,
+                'cart_key' => $cartKey,
+                'product_id' => $productId,
+                'nama_produk' => $productData->nama_produk,
+                'qty' => 1,
+                'harga' => (float) $harga,
+                'nama_satuan' => ($tipe === 'grosir') ? $productData->satuan_besar : $productData->satuan_kecil,
                 'satuan_pilihan' => $tipe,
-                'konversi'       => $konversi,
-                'subtotal'       => (float)$harga, // Harga langsung muncul karena subtotal sudah diisi
+                'konversi' => $konversi,
+                'discount' => 0,
+                'discount_amount' => 0,
+                'subtotal_before_discount' => $subtotal_before_discount,
+                'subtotal' => $subtotal_before_discount, // Harga langsung muncul karena subtotal sudah diisi
+                'satuan_kecil' => $productData->satuan_kecil,
+                'satuan_besar' => $productData->satuan_besar,
+                'has_grosir' => $productData->has_grosir,
             ];
         }
 
@@ -318,13 +382,49 @@ class Pos extends Page
         $this->total = collect($this->cart)->sum('subtotal');
     }
 
+    // Method baru untuk update discount
+    public function updateDiscount($index, $discountValue)
+    {
+        if (!isset($this->cart[$index]))
+            return;
+
+        $this->cart[$index]['discount'] = (float) $discountValue;
+        $this->recalculateItemSubtotal($index);
+        $this->calculateTotal();
+    }
+
+    // Helper method untuk recalculate subtotal dengan discount
+    private function recalculateItemSubtotal($index)
+    {
+        if (!isset($this->cart[$index]))
+            return;
+
+        $item = &$this->cart[$index];
+        $subtotal_before_discount = (float) $item['qty'] * (float) $item['harga'];
+        $discount_amount = (float) $item['discount'];
+
+        // Hitung subtotal setelah diskon
+        $subtotal_after_discount = $subtotal_before_discount - $discount_amount;
+
+        // Pastikan subtotal tidak negatif
+        if ($subtotal_after_discount < 0) {
+            $subtotal_after_discount = 0;
+            $discount_amount = $subtotal_before_discount;
+        }
+
+        $item['subtotal_before_discount'] = $subtotal_before_discount;
+        $item['discount_amount'] = $discount_amount;
+        $item['subtotal'] = $subtotal_after_discount;
+    }
+
     public function toggleSatuan($index, $satuanBaru)
     {
-        if (!isset($this->cart[$index])) return;
+        if (!isset($this->cart[$index]))
+            return;
 
         $item = $this->cart[$index];
         $product = \App\Models\Product::find($item['product_id']);
-        
+
         // 1. Buat Key Baru berdasarkan satuan yang dipilih
         $newCartKey = $item['product_id'] . '_' . $satuanBaru;
 
@@ -335,8 +435,8 @@ class Pos extends Page
         if ($existingIndex !== false) {
             // Jika SUDAH ADA baris dengan satuan tersebut, gabungkan qty-nya
             $this->cart[$existingIndex]['qty'] += $item['qty'];
-            $this->cart[$existingIndex]['subtotal'] = $this->cart[$existingIndex]['qty'] * $this->cart[$existingIndex]['harga'];
-            
+            $this->recalculateItemSubtotal($existingIndex);
+
             // Hapus baris yang lama
             unset($this->cart[$index]);
             $this->cart = array_values($this->cart); // Reset urutan array
@@ -349,7 +449,10 @@ class Pos extends Page
             $this->cart[$index]['satuan_pilihan'] = $satuanBaru;
             $this->cart[$index]['nama_satuan'] = $namaSatuanBaru;
             $this->cart[$index]['harga'] = $hargaBaru;
-            $this->cart[$index]['subtotal'] = $this->cart[$index]['qty'] * $hargaBaru;
+            // Reset discount saat ganti satuan
+            $this->cart[$index]['discount'] = 0;
+            $this->cart[$index]['discount_amount'] = 0;
+            $this->recalculateItemSubtotal($index);
         }
 
         $this->calculateTotal(); // Update total tagihan
@@ -359,7 +462,7 @@ class Pos extends Page
     {
         if (isset($this->cart[$index])) {
             $this->cart[$index]['qty']++;
-            $this->cart[$index]['subtotal'] = (float)$this->cart[$index]['qty'] * (float)$this->cart[$index]['harga'];
+            $this->recalculateItemSubtotal($index);
             $this->calculateTotal();
         }
     }
@@ -369,7 +472,7 @@ class Pos extends Page
         if (isset($this->cart[$index])) {
             if ($this->cart[$index]['qty'] > 1) {
                 $this->cart[$index]['qty']--;
-                $this->cart[$index]['subtotal'] = (float)$this->cart[$index]['qty'] * (float)$this->cart[$index]['harga'];
+                $this->recalculateItemSubtotal($index);
             } else {
                 // Jika sisa 1 dan dikurang lagi, hapus dari keranjang
                 $this->removeFromCart($index);
@@ -381,15 +484,15 @@ class Pos extends Page
     public function removeFromCart($index)
     {
         if (isset($this->cart[$index])) {
-        unset($this->cart[$index]);
-        
-        // Reset urutan array agar tidak ada index yang bolong (0, 1, 2, ...)
-        $this->cart = array_values($this->cart);
-        
-        // Hitung ulang total tagihan
-        $this->calculateTotal();
-        
-        $this->dispatch('notify', ['message' => 'Produk dihapus', 'type' => 'info']);
-    }
+            unset($this->cart[$index]);
+
+            // Reset urutan array agar tidak ada index yang bolong (0, 1, 2, ...)
+            $this->cart = array_values($this->cart);
+
+            // Hitung ulang total tagihan
+            $this->calculateTotal();
+
+            $this->dispatch('notify', ['message' => 'Produk dihapus', 'type' => 'info']);
+        }
     }
 }

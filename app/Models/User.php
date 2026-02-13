@@ -23,11 +23,13 @@ class User extends Authenticatable
     const ROLE_GUDANG = 'gudang';
 
     protected $fillable = [
-    'name',
-    'email',
-    'password',
-    'role', // TAMBAHKAN INI
-];
+        'name',
+        'email',
+        'password',
+        'role',
+        'toko_id',
+        'cabang_id',
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -73,5 +75,10 @@ class User extends Authenticatable
     public function toko()
     {
         return $this->belongsTo(Toko::class, 'toko_id');
+    }
+
+    public function cabang()
+    {
+        return $this->belongsTo(Cabang::class, 'cabang_id');
     }
 }

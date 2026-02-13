@@ -9,16 +9,17 @@ class Product extends Model
 {
     protected $guarded = [];
     protected $fillable = [
-    'nama_produk', 
-    'harga',
-    'harga_grosir',
-    'satuan_besar',
-    'isi_konversi',
-    'unit_satuan_id', 
-    'kode', 
-    'barcode_number', 
-    'harga', 
-    'stok'];
+        'nama_produk',
+        'harga',
+        'harga_grosir',
+        'satuan_besar',
+        'isi_konversi',
+        'unit_satuan_id',
+        'kode',
+        'barcode_number',
+        'harga',
+        'stok'
+    ];
 
     protected static function booted()
     {
@@ -35,17 +36,28 @@ class Product extends Model
     {
         return $this->belongsTo(UnitSatuan::class, 'unit_satuan_id');
     }
+
+    public function gudangs()
+    {
+        return $this->hasMany(Gudang::class);
+    }
+
+    public function penjualanStoks()
+    {
+        return $this->hasMany(PenjualanStok::class);
+    }
+
     public function getStokLengkapAttribute()
     {
-        $konversi = $this->isi_konversi ?: 1; 
-        $totalPcs = (int) $this->stok; 
+        $konversi = $this->isi_konversi ?: 1;
+        $totalPcs = (int) $this->stok;
 
         // Mengambil label satuan besar dari database (default ke 'Unit' jika kosong)
         $satuanBesar = $this->satuan_besar ?: 'Unit';
 
         // Menghitung jumlah grosir (Satuan Besar)
         $jumlahBesar = floor($totalPcs / $konversi);
-        
+
         // Menghitung sisa eceran (Pcs)
         $pcs = $totalPcs % $konversi;
 
@@ -53,7 +65,7 @@ class Product extends Model
         if ($jumlahBesar > 0 && $pcs > 0) {
             return "{$jumlahBesar} {$satuanBesar} + {$pcs} Pcs";
         }
-        
+
         if ($jumlahBesar > 0) {
             return "{$jumlahBesar} {$satuanBesar}";
         }

@@ -16,24 +16,31 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                ->label('Nama')
-                ->searchable(),
-            
+                    ->label('Nama')
+                    ->searchable(),
+
                 TextColumn::make('email')
                     ->label('Email'),
-                
+
                 TextColumn::make('role')
                     ->label('Role')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'admin' => 'danger',
                         'kasir' => 'success',
                         'gudang' => 'primary',
                     }),
                 TextColumn::make('toko.nama_toko')
-                ->label('Lokasi Toko')
-                ->badge()
-                ->color('info'),
+                    ->label('Toko Cabang')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('-'),
+
+                TextColumn::make('cabang.nama_cabang')
+                    ->label('Cabang Gudang')
+                    ->badge()
+                    ->color('warning')
+                    ->placeholder('-'),
             ])
             ->filters([
                 //
