@@ -28,6 +28,8 @@ class CabangResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'Cabang';
 
+    protected static ?string $navigationLabel = 'Cabang Gudang';
+
     protected static string | UnitEnum | null $navigationGroup = 'Kategori Manajemen';
 
     public static function form(Schema $schema): Schema
