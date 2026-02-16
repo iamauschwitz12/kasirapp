@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Administrator',
             'email' => 'admin@gmail.com',
-            'password' => Hash::make('admin'), // ganti dengan password Anda
+            'password' => Hash::make('admin123!@#'), // ganti dengan password Anda
             'role' => 'admin', // sesuaikan dengan nama kolom role Anda
             // 'branch_id' => 1, // jika sudah ada sistem cabang nanti
         ]);
