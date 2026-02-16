@@ -52,7 +52,7 @@ class PenjualanStoksTable
                     ->sortable()
                     ->searchable(),
 
-                TextColumn::make('cabang.nama_cabang')
+                TextColumn::make('asalGudang.nama_gudang')
                     ->label('Asal Gudang'),
 
                 // Since we group by invoice, listing a single product is misleading if there are multiple.
@@ -90,7 +90,7 @@ class PenjualanStoksTable
                 // 3. Filter berdasarkan Asal Gudang
                 SelectFilter::make('asal_gudang_id')
                     ->label('Asal Gudang')
-                    ->relationship('cabang', 'nama_cabang'),
+                    ->relationship('asalGudang', 'nama_gudang'),
 
                 // 4. Filter Rentang Tanggal (Sangat Berguna untuk Stok Masuk)
                 Filter::make('created_at')
