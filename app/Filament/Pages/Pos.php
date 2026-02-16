@@ -444,11 +444,13 @@ class Pos extends Page
             // Jika BELUM ADA, ubah data di baris tersebut
             $hargaBaru = ($satuanBaru === 'grosir') ? $product->harga_grosir : $product->harga;
             $namaSatuanBaru = ($satuanBaru === 'grosir') ? $product->satuan_besar : $product->satuan_kecil;
+            $konversiBaru = ($satuanBaru === 'grosir') ? (int) $product->isi_konversi : 1;
 
             $this->cart[$index]['cart_key'] = $newCartKey;
             $this->cart[$index]['satuan_pilihan'] = $satuanBaru;
             $this->cart[$index]['nama_satuan'] = $namaSatuanBaru;
             $this->cart[$index]['harga'] = $hargaBaru;
+            $this->cart[$index]['konversi'] = $konversiBaru;
             // Reset discount saat ganti satuan
             $this->cart[$index]['discount'] = 0;
             $this->cart[$index]['discount_amount'] = 0;
