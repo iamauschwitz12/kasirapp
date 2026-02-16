@@ -75,12 +75,12 @@ class PenjualanStokForm
 
             Select::make('asal_gudang_id')
                 ->label('Asal Gudang')
-                ->relationship('cabang', 'nama_cabang')
+                ->relationship('asalGudang', 'nama_gudang')
                 ->searchable()
                 ->preload()
                 ->required()
                 ->createOptionForm([
-                    TextInput::make('nama_cabang')->required(),
+                    TextInput::make('nama_gudang')->required(),
                     TextInput::make('lokasi'),
                 ]),
 

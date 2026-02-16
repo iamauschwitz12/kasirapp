@@ -22,13 +22,7 @@ class PenjualanStok extends Model
     }
     public function asalGudang()
     {
-        return $this->belongsTo(Cabang::class, 'asal_gudang_id');
-    }
-
-    // Alias for asalGudang
-    public function cabang()
-    {
-        return $this->belongsTo(Cabang::class, 'asal_gudang_id');
+        return $this->belongsTo(AsalGudang::class, 'asal_gudang_id');
     }
     public function product()
     {
