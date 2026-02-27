@@ -389,7 +389,7 @@ class Pos extends Page
                 'nama_produk' => $productData->nama_produk,
                 'qty' => 1,
                 'harga' => (float) $harga,
-                'nama_satuan' => ($tipe === 'grosir') ? $productData->satuan_besar : $productData->satuan_kecil,
+                'nama_satuan' => ($tipe === 'grosir') ? $productData->satuan_kecil : $productData->satuan_besar,
                 'satuan_pilihan' => $tipe,
                 'konversi' => $konversi,
                 'discount' => 0,
@@ -474,7 +474,7 @@ class Pos extends Page
         } else {
             // Jika BELUM ADA, ubah data di baris tersebut
             $hargaBaru = ($satuanBaru === 'grosir') ? $product->harga_grosir : $product->harga;
-            $namaSatuanBaru = ($satuanBaru === 'grosir') ? $product->satuan_besar : ($product->unitSatuan->nama_satuan ?? 'PCS');
+            $namaSatuanBaru = ($satuanBaru === 'grosir') ? ($product->unitSatuan->nama_satuan ?? 'PCS') : $product->satuan_besar;
             $konversiBaru = ($satuanBaru === 'grosir') ? (int) $product->isi_konversi : 1;
 
             $this->cart[$index]['cart_key'] = $newCartKey;
