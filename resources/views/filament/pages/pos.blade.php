@@ -97,7 +97,7 @@
                         class="px-2 py-1 rounded-md bg-mint-50 text-mint-600 text-xs font-bold border border-mint-200">F2</span>
                 </div>
 
-                <input type="text" wire:model.live="search" id="search-input" autofocus
+                <input type="text" wire:model.live.debounce.300ms="search" id="search-input" autofocus
                     placeholder="Cari Produk atau Scan..."
                     class="w-full pl-12 lg:pl-14 pr-12 py-3 lg:py-4 text-sm lg:text-base bg-white border-none rounded-xl lg:rounded-2xl shadow-lg ring-2 ring-mint-200 focus:ring-2 focus:ring-mint-400 placeholder:text-gray-400 text-gray-700 transition-all">
             </div>
@@ -153,7 +153,24 @@
                             {{-- Search Bar --}}
 
                             {{-- Product Grid Scrollable Area --}}
-                            <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 lg:pr-2 pb-2">
+                            <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 lg:pr-2 pb-2 relative">
+                                {{-- Loading Overlay --}}
+                                <div wire:loading
+                                    wire:target="search, addToCart, toggleSatuan, increaseQty, decreaseQty, removeFromCart"
+                                    class="absolute inset-0 bg-white/60 backdrop-blur-sm z-30 flex items-center justify-center rounded-xl"
+                                    style="display: none;">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="animate-spin h-8 w-8 text-mint-500"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                        <span class="text-xs font-bold text-mint-600">Memuat...</span>
+                                    </div>
+                                </div>
                                 <div
                                     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-4">
                                     @forelse($this->products as $product)
@@ -239,12 +256,12 @@
                                 </div>
 
                                 {{-- Toko Selector --}}
-                                @if(auth()->user()->email === 'admin@gmail.com')
+                                @if(auth()->user()->email === 'plastik_admin@gmail.com')
                                     <div class="mt-2 lg:mt-3">
                                         <select wire:model.live="selectedTokoId"
                                             class="block w-full py-2 lg:py-2.5 pl-3 lg:pl-4 pr-8 lg:pr-10 border-2 border-mint-200 rounded-lg lg:rounded-xl bg-white text-gray-700 text-xs lg:text-sm focus:ring-2 focus:ring-mint-400 focus:border-mint-400 transition-all cursor-pointer shadow-sm">
-                                            @foreach(\App\Models\Toko::all() as $toko)
-                                                <option value="{{ $toko->id }}">{{ $toko->nama_toko }}</option>
+                                            @foreach($tokos as $toko)
+                                                <option value="{{ $toko['id'] }}">{{ $toko['nama_toko'] }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -275,13 +292,21 @@
                                                                 <button
                                                                     class="px-1.5 py-0.5 rounded {{ $item['satuan_pilihan'] == 'eceran' ? 'bg-white shadow-sm text-mint-600 font-bold' : 'text-gray-500 hover:text-gray-700' }} transition-all"
                                                                     wire:click="toggleSatuan({{ $index }}, 'eceran')">
-                                                                    {{ $item['satuan_kecil'] }}
-                                                                </button>
-                                                                <button
-                                                                    class="px-1.5 py-0.5 rounded {{ $item['satuan_pilihan'] == 'grosir' ? 'bg-white shadow-sm text-mint-600 font-bold' : 'text-gray-500 hover:text-gray-700' }} transition-all"
-                                                                    wire:click="toggleSatuan({{ $index }}, 'grosir')">
                                                                     {{ $item['satuan_besar'] }}
                                                                 </button>
+                                                                @if(($item['stok_besar'] ?? 0) > 0)
+                                                                    <button
+                                                                        class="px-1.5 py-0.5 rounded {{ $item['satuan_pilihan'] == 'grosir' ? 'bg-white shadow-sm text-mint-600 font-bold' : 'text-gray-500 hover:text-gray-700' }} transition-all"
+                                                                        wire:click="toggleSatuan({{ $index }}, 'grosir')">
+                                                                        {{ $item['satuan_kecil'] }}
+                                                                    </button>
+                                                                @else
+                                                                    <span
+                                                                        class="px-1.5 py-0.5 rounded text-gray-300 cursor-not-allowed line-through text-[10px]"
+                                                                        title="Stok {{ $item['satuan_kecil'] }} tidak tersedia">
+                                                                        {{ $item['satuan_kecil'] }}
+                                                                    </span>
+                                                                @endif
                                                             </div>
                                                         @else
                                                             <span class="text-gray-500 capitalize">{{ $item['nama_satuan'] }}</span>
@@ -431,12 +456,12 @@
                                         </div>
 
                                         <div
-                                            class="p-4 rounded-xl bg-gradient-to-br from-mint-600 to-mint-700 text-white shadow-lg">
+                                            class="p-4 rounded-xl bg-gradient-to-br from-mint-600 to-mint-700 text-black shadow-lg">
                                             <div class="flex justify-between text-sm mb-1 opacity-90">
                                                 <span>Kembalian</span>
                                             </div>
                                             <div wire:key="kembalian-{{ $kembalian }}"
-                                                class="text-3xl font-black {{ $kembalian < 0 ? 'text-rose-300' : 'text-white' }}">
+                                                class="text-3xl font-black {{ $kembalian < 0 ? 'text-rose-300' : 'text-black' }}">
                                                 Rp {{ number_format($kembalian, 0, ',', '.') }}
                                             </div>
                                         </div>

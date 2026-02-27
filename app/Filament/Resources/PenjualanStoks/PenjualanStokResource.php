@@ -27,7 +27,7 @@ class PenjualanStokResource extends Resource
         // Jika user BUKAN Super Admin (Anda bisa sesuaikan logika role-nya di sini)
         // Contoh: jika Anda menggunakan Spatie Permissions: if (!$user->hasRole('super_admin'))
         // Atau cara sederhana: jika email bukan email owner
-        if ($user->email !== 'admin@gmail.com') { 
+        if ($user->email !== 'plastik_admin@gmail.com') {
             return $query->where('toko_id', $user->toko_id);
         }
 

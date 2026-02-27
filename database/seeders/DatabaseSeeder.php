@@ -18,10 +18,15 @@ class DatabaseSeeder extends Seeder
     {
         User::create([
             'name' => 'Administrator',
-            'email' => 'admin@gmail.com',
+            'email' => 'plastik_admin@gmail.com',
             'password' => Hash::make('admin123!@#'), // ganti dengan password Anda
             'role' => 'admin', // sesuaikan dengan nama kolom role Anda
             // 'branch_id' => 1, // jika sudah ada sistem cabang nanti
+        ]);
+
+        $this->call([
+            UnitSatuanSeeder::class,
+            ProductSeeder::class,
         ]);
     }
 }

@@ -44,6 +44,7 @@ class Pos extends Page
 
     public $cart = [];
     public $total = 0;
+    public $tokos = [];
     public $bayar = 0;
 
     // Tambahkan ini untuk memaksa sinkronisasi
@@ -55,10 +56,14 @@ class Pos extends Page
 
     public function mount()
     {
-        // Bersihkan cache pencarian produk sebelumnya
         $this->selectedTokoId = auth()->user()->toko_id;
         $this->cart = [];
-        // Paksa refresh data
+
+        // Cache toko list untuk admin agar tidak query setiap render
+        if (auth()->user()->email === 'plastik_admin@gmail.com') {
+            $this->tokos = \App\Models\Toko::all()->toArray();
+        }
+
         unset($this->products);
     }
     public function updatedSelectedTokoId()
@@ -150,7 +155,7 @@ class Pos extends Page
         try {
             DB::beginTransaction();
 
-            $targetTokoId = (auth()->user()->email === 'admin@gmail.com')
+            $targetTokoId = (auth()->user()->email === 'plastik_admin@gmail.com')
                 ? $this->selectedTokoId
                 : auth()->user()->toko_id;
 
@@ -258,18 +263,26 @@ class Pos extends Page
     public function products()
     {
         $user = auth()->user();
-        $isAdmin = $user->email === 'admin@gmail.com';
+        $isAdmin = $user->email === 'plastik_admin@gmail.com';
         $tokoId = $isAdmin ? ($this->selectedTokoId ?? $user->toko_id) : $user->toko_id;
 
         if (!$tokoId)
             return [];
 
-        // Ambil stok yang sudah digabung (SUM)
+        // Query stok yang sudah digabung (SUM) dengan filter search di SQL
         $query = \App\Models\PenjualanStok::query()
             ->select('product_id', \DB::raw('SUM(qty) as total_qty'))
-            ->with(['product'])
             ->where('toko_id', $tokoId)
+            ->when(!empty($this->search), function ($q) {
+                $search = $this->search;
+                $q->whereHas('product', function ($pq) use ($search) {
+                    $pq->where('nama_produk', 'LIKE', "%{$search}%")
+                        ->orWhere('barcode_number', 'LIKE', "%{$search}%")
+                        ->orWhere('kode', 'LIKE', "%{$search}%");
+                });
+            })
             ->groupBy('product_id')
+            ->with(['product.unitSatuan'])
             ->get();
 
         $results = [];
@@ -279,33 +292,20 @@ class Pos extends Page
             if (!$product)
                 continue;
 
-            // Filter Search
-            if (!empty($this->search)) {
-                $searchLower = strtolower($this->search);
-                if (
-                    !str_contains(strtolower($product->nama_produk), $searchLower) &&
-                    !str_contains($product->barcode_number, $searchLower)
-                ) {
-                    continue;
-                }
-            }
-
             $totalPcs = (int) $stokItem->total_qty;
             $konversi = (int) ($product->isi_konversi ?: 1);
 
-            // Logika Hitung Satuan Lengkap
             $jumlahBesar = floor($totalPcs / $konversi);
             $sisaEceran = $totalPcs % $konversi;
-            $satuanBesar = $product->satuan_besar ?? 'Kotak';
-            $satuanKecil = $product->satuan_kecil ?? 'Pcs';
+            $namaUnitSatuan = $product->unitSatuan->nama_satuan ?? 'PCS';
+            $satuanBesar = $product->satuan_besar ?? $namaUnitSatuan;
 
             $stokInformatif = ($konversi > 1)
-                ? "{$jumlahBesar} {$satuanBesar} + {$sisaEceran} {$satuanKecil}"
-                : "{$totalPcs} {$satuanKecil}";
+                ? "{$jumlahBesar} {$namaUnitSatuan} + {$sisaEceran} {$satuanBesar}"
+                : "{$totalPcs} {$namaUnitSatuan}";
 
-            // Hanya masukkan SATU objek per produk
             $results[] = (object) [
-                'id' => $product->id, // Kita gunakan ini sebagai kunci
+                'id' => $product->id,
                 'nama_produk' => $product->nama_produk,
                 'stok' => (int) $totalPcs,
                 'stok_lengkap' => $stokInformatif,
@@ -313,10 +313,11 @@ class Pos extends Page
                 'harga' => (float) $product->harga,
                 'harga_grosir' => (float) $product->harga_grosir,
                 'satuan_besar' => $satuanBesar,
-                'satuan_kecil' => $satuanKecil,
+                'satuan_kecil' => $namaUnitSatuan,
+                'nama_unit_satuan' => $namaUnitSatuan,
                 'has_grosir' => $product->harga_grosir > 0,
-                'isi_konversi' => (int) $konversi, // <--- Tambahkan ini
-                'satuan' => $satuanKecil,
+                'isi_konversi' => (int) $konversi,
+                'satuan' => $namaUnitSatuan,
             ];
         }
 
@@ -337,9 +338,38 @@ class Pos extends Page
 
     public function addToCart($productId, $tipe = 'eceran')
     {
-        $productData = collect($this->products)->firstWhere('id', $productId);
-        if (!$productData)
+        // Query langsung dari DB untuk 1 produk, bukan recompute semua products
+        $user = auth()->user();
+        $isAdmin = $user->email === 'plastik_admin@gmail.com';
+        $tokoId = $isAdmin ? ($this->selectedTokoId ?? $user->toko_id) : $user->toko_id;
+
+        $stokItem = \App\Models\PenjualanStok::query()
+            ->select('product_id', \DB::raw('SUM(qty) as total_qty'))
+            ->where('toko_id', $tokoId)
+            ->where('product_id', $productId)
+            ->groupBy('product_id')
+            ->with('product.unitSatuan')
+            ->first();
+
+        if (!$stokItem || !$stokItem->product)
             return;
+
+        $product = $stokItem->product;
+        $namaUnitSatuan = $product->unitSatuan->nama_satuan ?? 'PCS';
+        $konversi = (int) ($product->isi_konversi ?: 1);
+        $totalPcs = (int) $stokItem->total_qty;
+        $jumlahBesar = floor($totalPcs / $konversi);
+        $productData = (object) [
+            'id' => $product->id,
+            'nama_produk' => $product->nama_produk,
+            'harga_ecer' => (float) $product->harga,
+            'harga_grosir' => (float) $product->harga_grosir,
+            'satuan_besar' => $product->satuan_besar ?? $namaUnitSatuan,
+            'satuan_kecil' => $namaUnitSatuan,
+            'has_grosir' => $product->harga_grosir > 0,
+            'isi_konversi' => $konversi,
+            'stok_besar' => (int) $jumlahBesar,
+        ];
 
         $cartKey = $productId . '_' . $tipe;
         $index = collect($this->cart)->search(fn($item) => ($item['cart_key'] ?? '') === $cartKey);
@@ -369,6 +399,7 @@ class Pos extends Page
                 'satuan_kecil' => $productData->satuan_kecil,
                 'satuan_besar' => $productData->satuan_besar,
                 'has_grosir' => $productData->has_grosir,
+                'stok_besar' => $productData->stok_besar,
             ];
         }
 
@@ -423,7 +454,7 @@ class Pos extends Page
             return;
 
         $item = $this->cart[$index];
-        $product = \App\Models\Product::find($item['product_id']);
+        $product = \App\Models\Product::with('unitSatuan')->find($item['product_id']);
 
         // 1. Buat Key Baru berdasarkan satuan yang dipilih
         $newCartKey = $item['product_id'] . '_' . $satuanBaru;
@@ -443,7 +474,7 @@ class Pos extends Page
         } else {
             // Jika BELUM ADA, ubah data di baris tersebut
             $hargaBaru = ($satuanBaru === 'grosir') ? $product->harga_grosir : $product->harga;
-            $namaSatuanBaru = ($satuanBaru === 'grosir') ? $product->satuan_besar : $product->satuan_kecil;
+            $namaSatuanBaru = ($satuanBaru === 'grosir') ? $product->satuan_besar : ($product->unitSatuan->nama_satuan ?? 'PCS');
             $konversiBaru = ($satuanBaru === 'grosir') ? (int) $product->isi_konversi : 1;
 
             $this->cart[$index]['cart_key'] = $newCartKey;
