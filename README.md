@@ -1,59 +1,63 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<h2 align="left">Program kasir</h2>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+###
 
-## About Laravel
+<p align="left">dibuat kustomiasi sesuai permintaan user.</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+###
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<p align="left">Fitur-fitur : <br>1. Role admin, kasir, gudang<br>2. scan barang dengan barcode<br>3. cetak nota<br>4. laporan sales.<br>5. opname gudang<br>6. opname toko<br>7. dashboard admin<br>8. dashboard gudang<br>9. stok gudang.<br>10. multi gudang<br>11. munti toko<br>12. barang masuk toko<br>13 barang masuk gudang.<br>14. cetak laporan sales<br>15. filter pada setiap menu<br>16. menu kasir<br>17. bisa beli eceran dan grosir<br>18. dan lain-lain</p>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+###
 
-## Learning Laravel
+<p align="left">Program ini dibuat dengan laravel 12 dan filament 4.x https://filamentphp.com/docs/4.x/resources/overview#!</p>
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+###
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<div align="center">
+  <img height="500" src="https://i.ibb.co.com/v6yNYzqw/Screenshot-20260301-144328.png"  />
+</div>
 
-## Laravel Sponsors
+###
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+<div align="center">
+  <img height="500" src="https://i.ibb.co.com/JjPMn31V/Screenshot-20260301-144532.png"  />
+</div>
 
-### Premium Partners
+###
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+<div align="center">
+  <img height="250" src="https://i.ibb.co.com/Y7Qnj4SV/Screenshot-20260301-144407.png"  />
+</div>
 
-## Contributing
+###
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+<div align="center">
+  <img height="500" src="https://i.ibb.co.com/C35qCHBM/Screenshot-20260301-144428.png"  />
+</div>
 
-## Code of Conduct
+###
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+<div align="center">
+  <img height="500" src="https://i.ibb.co.com/Gf14Y6m7/Screenshot-20260301-144444.png"  />
+</div>
 
-## Security Vulnerabilities
+###
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+<div align="center">
+  <img height="500" src="https://i.ibb.co.com/FkT39R3P/Screenshot-20260301-144458.png"  />
+</div>
 
-## License
+###
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<div align="center">
+  <img height="500" src="https://i.ibb.co.com/DDmq8DB8/Screenshot-20260301-144518.png"  />
+</div>
+
+###
+
+<div align="center">
+  <img height="400" src="https://i.ibb.co.com/67Pf7R9p/Screenshot-20260301-144611.png"  />
+</div>
+
+###
