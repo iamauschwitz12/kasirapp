@@ -6,7 +6,7 @@
 
 ###
 
-<p align="left">Fitur-fitur : <br>1. Role admin, kasir, gudang<br>2. scan barang dengan barcode<br>3. cetak nota<br>4. laporan sales.<br>5. opname gudang<br>6. opname toko<br>7. dashboard admin<br>8. dashboard gudang<br>9. stok gudang.<br>10. multi gudang<br>11. munti toko<br>12. barang masuk toko<br>13 barang masuk gudang.<br>14. cetak laporan sales<br>15. filter pada setiap menu<br>16. menu kasir<br>17. bisa beli eceran dan grosir<br>18. dan lain-lain</p>
+<p align="left">Fitur-fitur : <br>1. Role admin, kasir, gudang<br>2. scan barang dengan barcode<br>3. cetak nota<br>4. laporan sales.<br>5. opname gudang<br>6. opname toko<br>7. dashboard admin<br>8. dashboard gudang<br>9. stok gudang.<br>10. multi gudang<br>11. munti toko<br>12. barang masuk toko<br>13 barang masuk gudang.<br>14. cetak laporan sales<br>15. filter pada setiap menu<br>16. menu kasir<br>17. bisa beli eceran dan grosir<br>18. diskon per-item <br>19. dan lain-lain</p>
 
 ###
 
