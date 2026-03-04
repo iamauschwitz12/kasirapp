@@ -23,7 +23,9 @@ class ProductForm
                 TextInput::make('kode')
                     ->label('Kode Urutan')
                     ->default(function () {
-                        $maxKode = (int) \App\Models\Product::max('kode');
+                        $maxKode = (int) \Illuminate\Support\Facades\DB::table('products')
+                            ->selectRaw('MAX(CAST(kode AS UNSIGNED)) as max_kode')
+                            ->value('max_kode');
                         return $maxKode + 1;
                     })
                     ->disabled()
@@ -38,7 +40,7 @@ class ProductForm
                     ->numeric()
                     ->prefix('Rp'),
                 Select::make('unit_satuan_id')
-                ->label('Nama satuan besar')
+                    ->label('Nama satuan besar')
                     ->relationship('unitSatuan', 'nama_satuan')
                     ->searchable()
                     ->preload()
