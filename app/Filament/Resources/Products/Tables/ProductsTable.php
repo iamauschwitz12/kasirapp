@@ -5,12 +5,14 @@ namespace App\Filament\Resources\Products\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ImportAction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
 use App\Models\Product;
+use App\Filament\Imports\ProductImporter;
 use Filament\Forms\Components\TextInput;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
@@ -31,6 +33,11 @@ class ProductsTable
                 TextColumn::make('harga')->label('Harga')->money('idr', true)->sortable(),
             ])
             ->headerActions([
+                ImportAction::make()
+                    ->importer(ProductImporter::class)
+                    ->label('Import Produk')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('success'),
                 ExportAction::make()
                     ->label('Export Excel')
                     ->exports([

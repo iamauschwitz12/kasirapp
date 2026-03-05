@@ -126,7 +126,7 @@ class PenjualanStokForm
                 ->helperText('Jumlah pcs dalam 1 satuan besar (Dus/Ikat)'),
 
             TextInput::make('input_satuan_besar')
-                ->label('Jumlah Satuan Besar')
+                ->label('Jumlah Masuk (Satuan Besar)')
                 ->numeric()
                 ->default(0)
                 ->live()
