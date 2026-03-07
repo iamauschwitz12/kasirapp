@@ -57,14 +57,12 @@
 ###
 
 <div align="center">
-
+  <img height="400" src="https://i.ibb.co.com/67Pf7R9p/Screenshot-20260301-144611.png"  />
+</div>
 ###
 
 <p align="left">JIKA BERMINAT DAN MENGINGINKAN APLIKASI INI. <br>KONTAK VIA EMAIL : ilham2309@gmail.com</p>
 
 ###
-
-  <img height="400" src="https://i.ibb.co.com/67Pf7R9p/Screenshot-20260301-144611.png"  />
-</div>
 
 ###
