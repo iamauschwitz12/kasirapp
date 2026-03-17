@@ -68,11 +68,23 @@
         if (printArea) {
             printArea.style.display = 'block';
             setTimeout(() => {
+                const afterPrintHandler = () => {
+                    if (printArea) printArea.style.display = 'none';
+                    isPrinting = false;
+                    window.removeEventListener('afterprint', afterPrintHandler);
+                };
+                
+                window.addEventListener('afterprint', afterPrintHandler);
+                
                 window.print();
-                printArea.style.display = 'none';
-                // Reset status printing setelah popup ditutup
-                isPrinting = false;
-            }, 150);
+                
+                // Fallback protection: reset status setelah 30 detik jika afterprint tidak merespon di mobile
+                setTimeout(() => {
+                    if (isPrinting) {
+                        afterPrintHandler();
+                    }
+                }, 30000);
+            }, 500); // Jeda lebih lama agar DOM sempat dirender di hp
         } else {
             isPrinting = false;
         }
