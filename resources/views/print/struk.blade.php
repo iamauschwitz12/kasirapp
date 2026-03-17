@@ -80,8 +80,7 @@
             <td>: {{ $sale->created_at->format('d/m/Y H:i') }}</td>
         </tr>
         <tr>
-            <td>Kasir</td>
-            <td>: {{ $sale->user->name ?? 'Admin' }}</td>
+            <td>{{ $sale->user->name ?? 'Admin' }}</td>
         </tr>
     </table>
 
@@ -110,7 +109,7 @@
                 {{-- Tampilkan baris diskon jika ada --}}
                 @if(($item->discount_amount ?? 0) > 0)
                     <div
-                        style="display: flex; justify-content: space-between; padding-left: 10px; font-size: 10px; color: #059669;">
+                        style="display: flex; justify-content: space-between; padding-left: 10px; font-size: 10px; color: #000000ff;">
                         <span>- Diskon</span>
                         <span>- Rp {{ number_format($item->discount_amount, 0, ',', '.') }}</span>
                     </div>
@@ -131,11 +130,11 @@
     @endphp
 
     @if($totalDiscount > 0)
-        <div style="display: flex; justify-content: space-between; color: #059669; font-weight: bold; margin-bottom: 3px;">
+        <div style="display: flex; justify-content: space-between; color: #000000ff; font-weight: bold; margin-bottom: 3px;">
             <span>TOTAL HEMAT</span>
             <span>Rp {{ number_format($totalDiscount, 0, ',', '.') }}</span>
         </div>
-        <hr style="border-top: 1px dashed #059669; margin: 3px 0;">
+        <hr style="border-top: 1px dashed #000000ff; margin: 3px 0;">
     @endif
 
     <div style="display: flex; justify-content: space-between;">

@@ -80,7 +80,6 @@ class SalesTable
                             'nomor_transaksi' => $sale->nomor_transaksi,
                             'waktu' => $sale->created_at->format('d/m/Y H:i'),
                             'kasir' => $sale->user->name ?? 'Admin',
-                            'total_harga' => $sale->total_harga,
                             'total_harga_formatted' => number_format($sale->total_harga, 0, ',', '.'),
                             'bayar' => $sale->bayar,
                             'bayar_formatted' => number_format($sale->bayar, 0, ',', '.'),

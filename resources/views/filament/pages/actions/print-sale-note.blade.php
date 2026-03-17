@@ -59,13 +59,15 @@
                 position: fixed !important;
                 left: 0 !important;
                 top: 0 !important;
-                width: 58mm !important;
+                width: 100% !important;
+                max-width: 58mm !important;
                 height: auto !important;
                 overflow: visible !important;
                 z-index: 999999 !important;
                 background: #fff !important;
-                margin: 5px !important;
-                padding: 5px !important;
+                margin: 0 !important;
+                padding: 0 5mm !important;
+                box-sizing: border-box !important;
             }
 
             /* Restore all children inside the receipt */
@@ -108,7 +110,7 @@
             }
 
             #sale-note-container table {
-                width: 50% !important;
+                width: 100% !important;
                 border-collapse: collapse !important;
             }
 
@@ -122,7 +124,7 @@
 
     <div id="sale-note-container" x-show="saleNoteData" x-cloak>
         <template x-if="saleNoteData">
-            <div style="font-family: 'Courier New', Courier, monospace; width: 58mm; padding: 10px 5px; color: #000;">
+            <div style="font-family: 'Courier New', Courier, monospace; width: 100%; box-sizing: border-box; text-align: left; color: #000;">
 
                 {{-- Logo --}}
                 <div style="display: flex; justify-content: center;">
@@ -142,14 +144,14 @@
                 {{-- Detail Transaksi --}}
                 <table>
                     <tr>
-                        <td style="white-space: nowrap; ">No. Trx : <span x-text="saleNoteData.nomor_transaksi"></span></td>
+                        <td style="white-space: nowrap; ">No. Trx : <span x-text="saleNoteData.nomor_transaksi"></span>
+                        </td>
                     </tr>
                     <tr>
                         <td style="white-space: nowrap;">Tgl/Jam : <span x-text="saleNoteData.waktu"></span></td>
                     </tr>
                     <tr>
-                        <td style="white-space: nowrap;">Kasir</td>
-                        <td>: <span x-text="saleNoteData.kasir"></span></td>
+                        <td style="white-space: nowrap;">Kasir : <span x-text="saleNoteData.kasir"></span></td>
                     </tr>
                 </table>
 
@@ -173,11 +175,13 @@
 
                         <template x-if="item.discount_amount > 0">
                             <div>
-                                <div class="struk-discount-text" style="display: flex; justify-content: space-between; padding-left: 10px; color: #059669;">
+                                <div class="struk-discount-text"
+                                    style="display: flex; justify-content: space-between; padding-left: 10px; color: #000000ff;">
                                     <span>- Diskon</span>
                                     <span x-text="'- Rp ' + item.discount_formatted"></span>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; padding-left: 10px; font-weight: bold;">
+                                <div
+                                    style="display: flex; justify-content: space-between; padding-left: 10px; font-weight: bold;">
                                     <span>Subtotal</span>
                                     <span x-text="'Rp ' + item.subtotal_formatted"></span>
                                 </div>
@@ -191,11 +195,12 @@
                 {{-- Total Diskon --}}
                 <template x-if="saleNoteData.total_discount > 0">
                     <div>
-                        <div style="display: flex; justify-content: space-between; color: #059669; font-weight: bold; margin-bottom: 3px;">
+                        <div
+                            style="display: flex; justify-content: space-between; color: #000000ff; font-weight: bold; margin-bottom: 3px;">
                             <span>TOTAL HEMAT</span>
                             <span x-text="'Rp ' + saleNoteData.total_discount_formatted"></span>
                         </div>
-                        <div style="border-top: 1px dashed #059669; margin: 3px 0;"></div>
+                        <div style="border-top: 1px dashed #000000ff; margin: 3px 0;"></div>
                     </div>
                 </template>
 

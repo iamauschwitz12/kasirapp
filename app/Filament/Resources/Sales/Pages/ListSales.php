@@ -18,6 +18,6 @@ class ListSales extends ListRecords
     }
     public function getFooter(): \Illuminate\Contracts\View\View|null
     {
-        return view('filament.pages.pos-helper'); 
+        return view('filament.pages.actions.print-sale-note'); 
     }
 }

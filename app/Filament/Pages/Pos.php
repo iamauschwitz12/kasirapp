@@ -207,9 +207,41 @@ class Pos extends Page
 
             DB::commit();
 
+            $totalDiscount = $newSale->items->sum('discount_amount');
+
+            $saleNoteData = [
+                'nomor_transaksi' => $newSale->nomor_transaksi,
+                'waktu' => $newSale->created_at->format('d/m/Y H:i'),
+                'kasir' => auth()->user()->name ?? 'Admin',
+                'total_harga' => $newSale->total_harga,
+                'total_harga_formatted' => number_format($newSale->total_harga, 0, ',', '.'),
+                'bayar' => $newSale->bayar,
+                'bayar_formatted' => number_format($newSale->bayar, 0, ',', '.'),
+                'kembalian' => $newSale->kembalian ?? ($newSale->bayar - $newSale->total_harga),
+                'kembalian_formatted' => number_format($newSale->kembalian ?? ($newSale->bayar - $newSale->total_harga), 0, ',', '.'),
+                'total_discount' => $totalDiscount,
+                'total_discount_formatted' => number_format($totalDiscount, 0, ',', '.'),
+                'items' => $newSale->items->map(function ($item) {
+                    return [
+                        'nama_produk' => $item->product->nama_produk ?? '-',
+                        'satuan_pilihan' => $item->satuan_pilihan ?? 'pcs',
+                        'nama_satuan' => $item->nama_satuan ?? 'pcs',
+                        'qty' => $item->qty,
+                        'harga_saat_ini' => $item->harga_saat_ini,
+                        'harga_formatted' => number_format($item->harga_saat_ini, 0, ',', '.'),
+                        'subtotal' => $item->subtotal,
+                        'subtotal_formatted' => number_format($item->subtotal, 0, ',', '.'),
+                        'discount_amount' => $item->discount_amount ?? 0,
+                        'discount_formatted' => number_format($item->discount_amount ?? 0, 0, ',', '.'),
+                        'subtotal_before_discount' => $item->subtotal_before_discount ?? ($item->qty * $item->harga_saat_ini),
+                        'subtotal_before_discount_formatted' => number_format($item->subtotal_before_discount ?? ($item->qty * $item->harga_saat_ini), 0, ',', '.'),
+                    ];
+                })->toArray(),
+            ];
+
             $this->dispatch('close-modal', id: 'modal-pembayaran');
             $this->dispatch('notify', ['message' => 'Berhasil!', 'type' => 'success']);
-            $this->dispatch('open-print-window', url: route('print.struk', ['id' => $newSale->id]));
+            $this->dispatch('print-sale-note', $saleNoteData);
 
             // Reset serentak
             $this->cart = [];

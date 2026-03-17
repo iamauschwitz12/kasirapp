@@ -1,6 +1,6 @@
 {{-- Letakkan script di luar komponen agar tidak bentrok dengan render Livewire --}}
 @assets
-@include('filament.pages.pos-receipt')
+@include('filament.pages.actions.print-sale-note')
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
     tailwind.config = {
@@ -20,77 +20,7 @@
 </script>
 @endassets
 
-<x-filament-panels::page x-data="{ isPrinting: false }" x-on:print-receipt.window="
-        if (isPrinting) return;
-        isPrinting = true;
-
-        const data = $event.detail[0] || $event.detail;
-        if (!data) { isPrinting = false; return; }
-
-        // 1. Isi Data Header
-        document.getElementById('p-nomor').innerText = data.nomor_transaksi;
-        document.getElementById('p-tgl').innerText = data.tanggal;
-        document.getElementById('p-jam').innerText = data.jam;
-        document.getElementById('p-total').innerText = data.total;
-        document.getElementById('p-bayar').innerText = data.bayar;
-        document.getElementById('p-kembali').innerText = data.kembali;
-        if(document.getElementById('p-qty')) document.getElementById('p-qty').innerText = data.total_qty;
-
-        // 2. Isi Tabel Item
-        const itemTable = document.getElementById('p-items');
-        if (itemTable) {
-            itemTable.innerHTML = ''; 
-            data.items.forEach(item => {
-                let itemHTML = `
-                    <tr>
-                        <td colspan='2' style='font-weight:bold; padding-top:5px;'>${item.nama_produk}</td>
-                    </tr>
-                    <tr>
-                        <td style='font-size:11px;'>${item.qty} ${item.nama_satuan} x ${item.harga}</td>
-                        <td style='text-align:right;'>${item.subtotal_before_discount || item.subtotal}</td>
-                    </tr>`;
-                
-                // Tambahkan baris diskon jika ada
-                if (item.discount_amount && item.discount_amount > 0) {
-                    itemHTML += `
-                    <tr>
-                        <td style='font-size:10px; color:#059669; padding-left:10px;'>- Diskon</td>
-                        <td style='text-align:right; font-size:10px; color:#059669;'>-${item.discount_amount}</td>
-                    </tr>`;
-                }
-                
-                itemTable.innerHTML += itemHTML;
-            });
-        }
-
-        // 3. Eksekusi Print dengan Guard
-        const printArea = document.getElementById('receipt-print-area');
-        if (printArea) {
-            printArea.style.display = 'block';
-            setTimeout(() => {
-                const afterPrintHandler = () => {
-                    if (printArea) printArea.style.display = 'none';
-                    isPrinting = false;
-                    window.removeEventListener('afterprint', afterPrintHandler);
-                };
-                
-                window.addEventListener('afterprint', afterPrintHandler);
-                
-                window.print();
-                
-                // Fallback protection: reset status setelah 30 detik jika afterprint tidak merespon di mobile
-                setTimeout(() => {
-                    if (isPrinting) {
-                        afterPrintHandler();
-                    }
-                }, 30000);
-            }, 500); // Jeda lebih lama agar DOM sempat dirender di hp
-        } else {
-            isPrinting = false;
-        }
-    ">
-    @include('filament.pages.pos-helper')
-
+<x-filament-panels::page>
     <div wire:key="pos-main-container"
         class="flex flex-col lg:flex-row gap-4 lg:gap-6 h-[calc(100vh-140px)] -m-4 sm:-m-6 p-4 sm:p-6 overflow-hidden font-sans bg-gradient-to-br from-blue-50 via-white to-mint-50">
 
@@ -546,36 +476,7 @@
                         });
                         // Kita gunakan variabel global yang tidak akan dibuat ulang
 
-                        window.addEventListener('open-print-window', event => {
-                            // Ambil URL dari data event
-                            const url = event.detail[0].url;
-
-                            // Buka jendela baru untuk cetak
-                            const printWindow = window.open(url, '_blank', 'width=300,height=600');
-
-                            // Pastikan fokus kembali ke input pencarian setelah jendela cetak muncul
-                            if (printWindow) {
-                                printWindow.focus();
-                            }
-                        });
                         document.addEventListener('livewire:init', () => {
-                            // Menangkap sinyal dari Pos.php
-                            Livewire.on('open-print-window', (event) => {
-                                // Livewire v3 mengirim data dalam objek, kita ambil property 'url'
-                                const url = event.url;
-
-                                if (url) {
-                                    // Membuka jendela cetak di tab baru
-                                    const printWindow = window.open(url, '_blank', 'width=450,height=600');
-
-                                    // Cek jika diblokir oleh browser popup blocker
-                                    if (printWindow) {
-                                        printWindow.focus();
-                                    } else {
-                                        alert('Mohon izinkan Pop-up pada browser Anda untuk mencetak struk.');
-                                    }
-                                }
-                            });
                             document.addEventListener('keydown', function (e) {
                                 if (e.key === 'F10') {
                                     e.preventDefault();
