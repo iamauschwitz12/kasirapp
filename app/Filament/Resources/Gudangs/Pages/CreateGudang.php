@@ -17,6 +17,17 @@ class CreateGudang extends CreateRecord
 {
     protected static string $resource = GudangResource::class;
 
+    public function scanBarcodeCamera($barcode)
+    {
+        $product = \App\Models\Product::where('barcode_number', $barcode)->first();
+        if ($product) {
+            return [
+                'id' => $product->id,
+                'nama_produk' => $product->nama_produk,
+            ];
+        }
+        return null;
+    }
 
     protected function handleRecordCreation(array $data): Model
     {
@@ -59,7 +70,7 @@ class CreateGudang extends CreateRecord
                         Repeater::make('products')
                             ->label('Daftar Barang')
                             ->schema(GudangForm::getProductFields())
-                            ->columns(2)
+                            ->columns(12)
                             ->defaultItems(1)
                             ->addActionLabel('Tambah Barang')
                             ->reorderableWithButtons()
@@ -68,26 +79,4 @@ class CreateGudang extends CreateRecord
             ]);
     }
 
-    public function getFooter(): ?View
-    {
-        return view('filament.resources.gudangs.barcode-scanner');
-    }
-
-    public function findProductByBarcode($barcode)
-    {
-        $product = \App\Models\Product::where('barcode_number', $barcode)->first();
-
-        if ($product) {
-            return [
-                'success' => true,
-                'product' => [
-                    'id' => $product->id,
-                    'barcode_number' => $product->barcode_number,
-                    'nama_produk' => $product->nama_produk,
-                ]
-            ];
-        }
-
-        return ['success' => false];
-    }
 }

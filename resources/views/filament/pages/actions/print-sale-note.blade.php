@@ -129,7 +129,7 @@
                 {{-- Logo --}}
                 <div style="display: flex; justify-content: center;">
                     <img src="{{ asset('favicon.png') }}" alt="Logo"
-                        style="width: 40px; height: auto; margin: 0 auto 5px; filter: grayscale(100%);">
+                        style="width: 60px; height: auto; margin: 0 auto 5px; filter: grayscale(100%);">
                 </div>
 
                 {{-- Header Toko --}}

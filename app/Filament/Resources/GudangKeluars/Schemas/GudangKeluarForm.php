@@ -11,6 +11,7 @@ use Closure;
 use Illuminate\Support\Facades\DB;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\ViewField;
 
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Repeater;
@@ -79,6 +80,11 @@ class GudangKeluarForm
                         Repeater::make('products')
                             ->label('Daftar Barang')
                             ->schema([
+                                ViewField::make('scan_camera')
+                                    ->view('filament.resources.gudangkaluars.barcode-camera')
+                                    ->columnSpan(1)
+                                    ->hiddenLabel(),
+
                                 Select::make('product_id')
                                     ->label('Scan Barcode')
                                     ->relationship('product', 'barcode_number')
@@ -94,14 +100,17 @@ class GudangKeluarForm
                                             $set('nama_display', $product->nama_produk);
                                         }
                                     })
-                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems(), // Prevent selecting same item twice
+                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems() // Prevent selecting same item twice
+                                    ->columnSpan(3),
 
                                 TextInput::make('nama_display')
-                                    ->label('Nama Barang')->disabled()->dehydrated(false),
+                                    ->label('Nama Barang')->disabled()->dehydrated(false)
+                                    ->columnSpan(3),
 
                                 Select::make('unitsatuan_id')
                                     ->label('Satuan')->relationship('unitSatuan', 'nama_satuan')
-                                    ->required(),
+                                    ->required()
+                                    ->columnSpan(2),
 
                                 TextInput::make('qty')
                                     ->numeric()
@@ -125,9 +134,10 @@ class GudangKeluarForm
                                                 $fail("Stok tidak cukup. Sisa: {$stokTersedia}");
                                             }
                                         },
-                                    ]),
+                                    ])
+                                    ->columnSpan(3),
                             ])
-                            ->columns(4)
+                            ->columns(12)
                             ->defaultItems(1)
                             ->addActionLabel('Tambah Barang')
                     ])

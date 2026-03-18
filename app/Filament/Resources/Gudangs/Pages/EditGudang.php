@@ -17,6 +17,18 @@ class EditGudang extends EditRecord
 {
     protected static string $resource = GudangResource::class;
 
+    public function scanBarcodeCamera($barcode)
+    {
+        $product = \App\Models\Product::where('barcode_number', $barcode)->first();
+        if ($product) {
+            return [
+                'id' => $product->id,
+                'nama_produk' => $product->nama_produk,
+            ];
+        }
+        return null;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -80,7 +92,7 @@ class EditGudang extends EditRecord
                         Repeater::make('products')
                             ->label('Daftar Barang')
                             ->schema(GudangForm::getProductFields())
-                            ->columns(2)
+                            ->columns(12)
                             ->defaultItems(1)
                             ->addActionLabel('Tambah Barang')
                             ->reorderableWithButtons()

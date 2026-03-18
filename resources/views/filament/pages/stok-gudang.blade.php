@@ -1,6 +1,3 @@
-@assets
-@include('filament.pages.pos-receipt')
-@endassets
 
 <x-filament-panels::page>
     <div id="stok-container" class="relative">

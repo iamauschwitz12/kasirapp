@@ -14,6 +14,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Infolists\Components\Card;
 use Filament\Support\RawJs;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\ViewField;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -96,6 +97,11 @@ class GudangForm
     public static function getProductFields(): array
     {
         return [
+            ViewField::make('scan_camera')
+                ->view('filament.resources.gudangkaluars.barcode-camera')
+                ->columnSpan(1)
+                ->hiddenLabel(),
+
             Select::make('product_id')
                 ->label('Cari Barcode / Produk')
                 ->relationship('product', 'barcode_number')
@@ -106,6 +112,7 @@ class GudangForm
                 ->required()
                 ->native(false) // Keep searchable for better UX
                 ->autofocus() // Auto-focus so scanner input works immediately
+                ->columnSpan(4)
                 // Mengambil nama produk saat barcode dipilih
                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                     $product = \App\Models\Product::find($state);
@@ -119,7 +126,8 @@ class GudangForm
             TextInput::make('nama_display')
                 ->label('Nama Barang')
                 ->disabled() // Hanya untuk konfirmasi visual
-                ->dehydrated(false), // Tidak dikirim ke database gudang
+                ->dehydrated(false)
+                ->columnSpan(4),
 
             Select::make('unitsatuan_id') // Harus sama dengan nama kolom di migrasi
                 ->label('Satuan')
@@ -128,7 +136,7 @@ class GudangForm
                 ->searchable()
                 ->preload()
                 ->required()
-                ->columnSpanFull(),
+                ->columnSpan(3),
 
             TextInput::make('harga_beli')
                 ->mask(RawJs::make('$money($input)'))
@@ -139,6 +147,7 @@ class GudangForm
                 ->default(0)
                 ->label('Harga Beli')
                 ->live(onBlur: true)
+                ->columnSpan(4)
                 ->afterStateUpdated(function (Get $get, Set $set) {
                     self::hitungTotal($get, $set);
                 }),
@@ -148,6 +157,7 @@ class GudangForm
                 ->required()
                 ->label('Jumlah Masuk')
                 ->live(onBlur: true) // Aktifkan mode live
+                ->columnSpan(4)
                 ->afterStateUpdated(function (Get $get, Set $set) {
                     // Panggil fungsi hitung saat qty berubah
                     self::hitungTotal($get, $set);
@@ -159,6 +169,7 @@ class GudangForm
                 ->required()
                 ->label('Total Harga')
                 ->readonly() // Opsional: buat readonly agar user tidak mengedit manual
+                ->columnSpan(4)
                 ->helperText('Otomatis terhitung (Harga Beli x Qty)'),
         ];
     }

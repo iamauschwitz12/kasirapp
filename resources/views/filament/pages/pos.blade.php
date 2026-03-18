@@ -2,6 +2,7 @@
 @assets
 @include('filament.pages.actions.print-sale-note')
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script>
     tailwind.config = {
         corePlugins: {
@@ -28,20 +29,29 @@
         <div class="flex-1 flex flex-col min-h-0 relative">
 
             {{-- Search Bar --}}
-            <div class="mb-4 lg:mb-6 relative group z-10">
-                <div class="absolute inset-y-0 left-0 pl-4 lg:pl-5 flex items-center pointer-events-none">
-                    <x-heroicon-o-magnifying-glass
-                        class="h-5 w-5 lg:h-6 lg:w-6 text-mint-400 group-focus-within:text-mint-600 transition-colors duration-300" />
-                </div>
-                <!-- Hotkey Hint Badge -->
-                <div class="absolute inset-y-0 right-0 pr-3 lg:pr-4 flex items-center">
-                    <span
-                        class="px-2 py-1 rounded-md bg-mint-50 text-mint-600 text-xs font-bold border border-mint-200">F2</span>
-                </div>
+            <div class="mb-4 lg:mb-6 relative group z-10 flex gap-2">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-4 lg:pl-5 flex items-center pointer-events-none">
+                        <x-heroicon-o-magnifying-glass
+                            class="h-5 w-5 lg:h-6 lg:w-6 text-mint-400 group-focus-within:text-mint-600 transition-colors duration-300" />
+                    </div>
+                    <!-- Hotkey Hint Badge -->
+                    <div class="absolute inset-y-0 right-0 pr-3 lg:pr-4 flex items-center">
+                        <span
+                            class="px-2 py-1 rounded-md bg-mint-50 text-mint-600 text-xs font-bold border border-mint-200">F2</span>
+                    </div>
 
-                <input type="text" wire:model.live.debounce.300ms="search" id="search-input" autofocus
-                    placeholder="Cari Produk atau Scan..."
-                    class="w-full pl-12 lg:pl-14 pr-12 py-3 lg:py-4 text-sm lg:text-base bg-white border-none rounded-xl lg:rounded-2xl shadow-lg ring-2 ring-mint-200 focus:ring-2 focus:ring-mint-400 placeholder:text-gray-400 text-gray-700 transition-all">
+                    <input type="text" wire:model.live.debounce.300ms="search" id="search-input" autofocus
+                        placeholder="Cari Produk atau Scan..."
+                        class="w-full pl-12 lg:pl-14 pr-12 py-3 lg:py-4 text-sm lg:text-base bg-white border-none rounded-xl lg:rounded-2xl shadow-lg ring-2 ring-mint-200 focus:ring-2 focus:ring-mint-400 placeholder:text-gray-400 text-gray-700 transition-all">
+                </div>
+                
+                <!-- Tombol Scan Kamera HP -->
+                <button type="button" x-data x-on:click="$dispatch('open-modal', { id: 'modal-scanner' })" 
+                    title="Scan Barcode dengan Kamera"
+                    class="bg-mint-500 hover:bg-mint-600 active:bg-mint-700 text-white px-4 py-3 lg:py-4 rounded-xl lg:rounded-2xl shadow-lg transition-all flex items-center justify-center shrink-0 h-full">
+                    <x-heroicon-o-camera class="w-6 h-6 lg:w-7 lg:h-7" />
+                </button>
             </div>
 
             {{-- Product Grid Area --}}
@@ -438,6 +448,28 @@
                                         </div>
                                     </x-slot>
                                 </x-filament::modal>
+
+                                <!-- Modal Scanner Kamera -->
+                                <x-filament::modal id="modal-scanner" width="md" class="z-50">
+                                    <x-slot name="heading">
+                                        Scan Barcode Menggunakan Kamera
+                                    </x-slot>
+
+                                    <div class="flex flex-col items-center justify-center p-2">
+                                        <div id="reader" style="width: 100%; min-height: 250px; border-radius: 0.75rem; overflow: hidden; border: 2px solid #a7f3d0; background-color: #f8fafc;"></div>
+                                        <p class="text-[11px] lg:text-xs text-gray-500 mt-3 text-center font-medium">Jika ada tombol <strong>Request Camera Permissions</strong> silakan di klik, lalu pilih <strong>Izinkan/Allow</strong> pada popup browser Anda.</p>
+                                    </div>
+
+                                    <x-slot name="footer">
+                                        <div class="flex gap-3 pt-2">
+                                            <button type="button"
+                                                wire:click="$dispatch('close-modal', { id: 'modal-scanner' })"
+                                                class="w-full px-4 py-3 text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition shadow-sm">
+                                                Tutup Scanner
+                                            </button>
+                                        </div>
+                                    </x-slot>
+                                </x-filament::modal>
                             </div>
                         </div>
                     </div>
@@ -483,6 +515,59 @@
                                     @this.checkout(); // Memanggil fungsi checkout langsung
                                 }
                             });
+                        });
+
+                        // SCRIPT UNTUK HTML5-QRCODE CAMERA SCANNER
+                        let html5QrcodeScanner = null;
+
+                        document.addEventListener('open-modal', (event) => {
+                            if (event.detail.id === 'modal-scanner') {
+                                setTimeout(() => {
+                                    if (!html5QrcodeScanner) {
+                                        // Peringatan jika koneksi HTTP biasa
+                                        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+                                            alert("Peringatan: Kamera membutuhkan koneksi aman (HTTPS) atau diakses dari Localhost. Jika kamera tetap tidak muncul, silakan gunakan akses HTTPS/Localhost.");
+                                        }
+
+                                        html5QrcodeScanner = new Html5QrcodeScanner(
+                                            "reader",
+                                            { 
+                                                fps: 10, 
+                                                qrbox: { width: 250, height: 150 },
+                                                rememberLastUsedCamera: true
+                                            },
+                                            /* verbose= */ false
+                                        );
+                                        
+                                        html5QrcodeScanner.render((decodedText, decodedResult) => {
+                                            // Sukses scan
+                                            @this.scanBarcode(decodedText);
+                                            
+                                            // Hapus scanner dan tutup modal
+                                            html5QrcodeScanner.clear().then(() => {
+                                                html5QrcodeScanner = null;
+                                                window.dispatchEvent(new CustomEvent('close-modal', { detail: { id: 'modal-scanner' } }));
+                                            }).catch(e => {
+                                                console.error("Gagal clear scanner", e);
+                                            });
+                                        }, (errorMessage) => {
+                                            // Abaikan error saat tidak memindai QR code
+                                        });
+                                    }
+                                }, 300); // jeda agar elemen #reader dirender dengan baik oleh Alpine modal
+                            }
+                        });
+
+                        document.addEventListener('close-modal', (event) => {
+                            if (event.detail.id === 'modal-scanner') {
+                                if (html5QrcodeScanner) {
+                                    html5QrcodeScanner.clear().then(() => {
+                                        html5QrcodeScanner = null;
+                                    }).catch((err) => {
+                                        console.error("Gagal menghentikan scanner.", err);
+                                    });
+                                }
+                            }
                         });
                     </script>
                 </div>

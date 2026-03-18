@@ -18,6 +18,18 @@ class EditGudangKeluar extends EditRecord
 {
     protected static string $resource = GudangKeluarResource::class;
 
+    public function scanBarcodeCamera($barcode)
+    {
+        $product = \App\Models\Product::where('barcode_number', $barcode)->first();
+        if ($product) {
+            return [
+                'id' => $product->id,
+                'nama_produk' => $product->nama_produk,
+            ];
+        }
+        return null;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
