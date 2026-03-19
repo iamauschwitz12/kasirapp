@@ -69,9 +69,12 @@ class StokGudang extends Page
                 DB::raw('SUM(gudangs.sisa_stok) as total_sisa')
             );
 
-        // Tambahkan logika pencarian jika variabel search diisi
+        // Tambahkan logika pencarian jika variabel search diisi (nama produk ATAU barcode)
         if (!empty($this->search)) {
-            $query->where('products.nama_produk', 'like', '%' . $this->search . '%');
+            $query->where(function ($q) {
+                $q->where('products.nama_produk', 'like', '%' . $this->search . '%')
+                  ->orWhere('products.barcode_number', 'like', '%' . $this->search . '%');
+            });
         }
 
         if (!empty($this->cabang_id)) {

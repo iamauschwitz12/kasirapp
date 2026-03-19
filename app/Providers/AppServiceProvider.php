@@ -60,5 +60,32 @@ class AppServiceProvider extends ServiceProvider
             fn(): string => view('filament.pages.actions.print-sale-note')->render(),
             scopes: \App\Filament\Resources\Sales\Pages\ListSales::class,
         );
+
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::HEAD_END,
+            fn(): string => '<style>@media(max-width:1024px){html,body{overscroll-behavior:none;}}</style>',
+            scopes: \App\Filament\Resources\OpnameTokos\Pages\CreateOpnameToko::class,
+        );
+
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::HEAD_END,
+            fn(): string => '<style>@media(max-width:1024px){html,body{overscroll-behavior:none;}}</style>',
+            scopes: \App\Filament\Resources\PenjualanStoks\Pages\CreatePenjualanStok::class,
+        );
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::HEAD_END,
+            fn(): string => '<style>@media(max-width:1024px){html,body{overscroll-behavior:none;}}</style>',
+            scopes: \App\Filament\Resources\OpnameGudangs\Pages\CreateOpnameGudang::class,
+        );
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::HEAD_END,
+            fn(): string => '<style>@media(max-width:1024px){html,body{overscroll-behavior:none;}}</style>',
+            scopes: \App\Filament\Resources\GudangKeluars\Pages\CreateGudangKeluar::class,
+        );
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::HEAD_END,
+            fn(): string => '<style>@media(max-width:1024px){html,body{overscroll-behavior:none;}}</style>',
+            scopes: \App\Filament\Resources\Gudangs\Pages\CreateGudang::class,
+        );
     }
 }

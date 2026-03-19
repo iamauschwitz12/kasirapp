@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ImportAction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TextInputColumn;
 use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
@@ -30,7 +31,28 @@ class ProductsTable
                 TextColumn::make('nama_produk')->label('Nama Produk')->searchable()->sortable(),
                 TextColumn::make('kode')->label('Kode Produk')->searchable()->sortable(),
                 TextColumn::make('unitSatuan.nama_satuan')->label('Satuan')->searchable()->sortable(),
-                TextColumn::make('harga')->label('Harga')->money('idr', true)->sortable(),
+                TextInputColumn::make('harga')
+                    ->label('Harga Eceran (Rp)')
+                    ->sortable()
+                    ->extraInputAttributes([
+                        'x-init' => '$el.value = parseInt($el.value.replace(/,/g,\'\') || 0).toLocaleString(\'en-US\')',
+                        'x-on:focus' => '$el.value = $el.value.replace(/,/g, \'\')',
+                        'x-on:blur' => 'let v = parseInt($el.value.replace(/,/g,\'\') || 0); $el.value = isNaN(v) ? 0 : v.toLocaleString(\'en-US\')',
+                        'min' => 0,
+                        'step' => 100,
+                    ])
+                    ->rules(['nullable', 'numeric', 'min:0']),
+                TextInputColumn::make('harga_grosir')
+                    ->label('Harga Grosir (Rp)')
+                    ->sortable()
+                    ->extraInputAttributes([
+                        'x-init' => '$el.value = parseInt($el.value.replace(/,/g,\'\') || 0).toLocaleString(\'en-US\')',
+                        'x-on:focus' => '$el.value = $el.value.replace(/,/g, \'\')',
+                        'x-on:blur' => 'let v = parseInt($el.value.replace(/,/g,\'\') || 0); $el.value = isNaN(v) ? 0 : v.toLocaleString(\'en-US\')',
+                        'min' => 0,
+                        'step' => 100,
+                    ])
+                    ->rules(['nullable', 'numeric', 'min:0']),
             ])
             ->headerActions([
                 ImportAction::make()

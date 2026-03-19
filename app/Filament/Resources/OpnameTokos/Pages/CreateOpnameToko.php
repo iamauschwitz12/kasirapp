@@ -15,6 +15,18 @@ class CreateOpnameToko extends CreateRecord
 {
     protected static string $resource = OpnameTokoResource::class;
 
+    public function scanBarcodeCamera($barcode)
+    {
+        $product = \App\Models\Product::where('barcode_number', $barcode)->first();
+        if ($product) {
+            return [
+                'id' => $product->id,
+                'nama_produk' => $product->nama_produk,
+            ];
+        }
+        return null;
+    }
+
     protected function handleRecordCreation(array $data): Model
     {
         $products = $data['products'] ?? [];

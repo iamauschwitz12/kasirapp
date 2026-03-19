@@ -72,4 +72,17 @@ class Product extends Model
 
         return "{$pcs} Pcs";
     }
+
+    /**
+     * Mutator: bersihkan koma/titik pemisah ribuan sebelum menyimpan harga
+     */
+    public function setHargaAttribute($value): void
+    {
+        $this->attributes['harga'] = (int) str_replace([',', '.'], '', $value);
+    }
+
+    public function setHargaGrosirAttribute($value): void
+    {
+        $this->attributes['harga_grosir'] = (int) str_replace([',', '.'], '', $value);
+    }
 }

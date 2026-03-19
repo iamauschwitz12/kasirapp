@@ -7,6 +7,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Section;
@@ -28,7 +29,7 @@ class OpnameGudangForm
                         Repeater::make('products')
                             ->label('Daftar Barang')
                             ->schema(self::getProductFields())
-                            ->columns(2)
+                            ->columns(4)
                             ->defaultItems(1)
                             ->addActionLabel('Tambah Barang')
                             ->reorderableWithButtons()
@@ -63,8 +64,14 @@ class OpnameGudangForm
     public static function getProductFields(): array
     {
         return [
+            ViewField::make('scan_camera')
+                ->view('filament.resources.opnamegudangs.barcode-camera')
+                ->columnSpan(1)
+                ->hiddenLabel(),
+
             Select::make('product_id')
                 ->label('Cari Barcode / Produk')
+                ->columnSpan(3)
                 ->options(function () {
                     $user = auth()->user();
 

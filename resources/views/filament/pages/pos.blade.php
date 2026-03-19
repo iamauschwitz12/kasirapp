@@ -45,9 +45,9 @@
                         placeholder="Cari Produk atau Scan..."
                         class="w-full pl-12 lg:pl-14 pr-12 py-3 lg:py-4 text-sm lg:text-base bg-white border-none rounded-xl lg:rounded-2xl shadow-lg ring-2 ring-mint-200 focus:ring-2 focus:ring-mint-400 placeholder:text-gray-400 text-gray-700 transition-all">
                 </div>
-                
+
                 <!-- Tombol Scan Kamera HP -->
-                <button type="button" x-data x-on:click="$dispatch('open-modal', { id: 'modal-scanner' })" 
+                <button type="button" x-data x-on:click="$dispatch('open-modal', { id: 'modal-scanner' })"
                     title="Scan Barcode dengan Kamera"
                     class="bg-mint-500 hover:bg-mint-600 active:bg-mint-700 text-white px-4 py-3 lg:py-4 rounded-xl lg:rounded-2xl shadow-lg transition-all flex items-center justify-center shrink-0 h-full">
                     <x-heroicon-o-camera class="w-6 h-6 lg:w-7 lg:h-7" />
@@ -456,8 +456,12 @@
                                     </x-slot>
 
                                     <div class="flex flex-col items-center justify-center p-2">
-                                        <div id="reader" style="width: 100%; min-height: 250px; border-radius: 0.75rem; overflow: hidden; border: 2px solid #a7f3d0; background-color: #f8fafc;"></div>
-                                        <p class="text-[11px] lg:text-xs text-gray-500 mt-3 text-center font-medium">Jika ada tombol <strong>Request Camera Permissions</strong> silakan di klik, lalu pilih <strong>Izinkan/Allow</strong> pada popup browser Anda.</p>
+                                        <div id="reader"
+                                            style="width: 100%; min-height: 250px; border-radius: 0.75rem; overflow: hidden; border: 2px solid #a7f3d0; background-color: #f8fafc;">
+                                        </div>
+                                        <p class="text-[11px] lg:text-xs text-gray-500 mt-3 text-center font-medium">
+                                            Jika ada tombol <strong>Request Camera Permissions</strong> silakan di klik,
+                                            lalu pilih <strong>Izinkan/Allow</strong> pada popup browser Anda.</p>
                                     </div>
 
                                     <x-slot name="footer">
@@ -531,18 +535,18 @@
 
                                         html5QrcodeScanner = new Html5QrcodeScanner(
                                             "reader",
-                                            { 
-                                                fps: 10, 
+                                            {
+                                                fps: 10,
                                                 qrbox: { width: 250, height: 150 },
                                                 rememberLastUsedCamera: true
                                             },
                                             /* verbose= */ false
                                         );
-                                        
+
                                         html5QrcodeScanner.render((decodedText, decodedResult) => {
                                             // Sukses scan
                                             @this.scanBarcode(decodedText);
-                                            
+
                                             // Hapus scanner dan tutup modal
                                             html5QrcodeScanner.clear().then(() => {
                                                 html5QrcodeScanner = null;
@@ -572,6 +576,13 @@
                     </script>
                 </div>
                 <style>
+                    /* Nonaktifkan pull-to-refresh pada mode smartphone */
+                    @media (max-width: 1024px) {
+                        html, body {
+                            overscroll-behavior: none;
+                        }
+                    }
+
                     /* Perbaikan scrollbar agar lebih elegan */
                     .custom-scrollbar::-webkit-scrollbar {
                         width: 6px;
