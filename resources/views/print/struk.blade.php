@@ -72,8 +72,7 @@
     {{-- Detail Transaksi --}}
     <table>
         <tr>
-            <td>No. Trx</td>
-            <td>: {{ $sale->nomor_transaksi }}</td>
+            <td colspan="2" style="word-break: break-all; white-space: normal;">{{ $sale->nomor_transaksi }}</td>
         </tr>
         <tr>
             <td>Tgl/Jam</td>

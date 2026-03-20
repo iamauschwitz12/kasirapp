@@ -144,14 +144,14 @@
                 {{-- Detail Transaksi --}}
                 <table>
                     <tr>
-                        <td style="white-space: nowrap; ">No. Trx : <span x-text="saleNoteData.nomor_transaksi"></span>
+                        <td style="white-space: nowrap; ">No.Trx:<span x-text="saleNoteData.nomor_transaksi"></span>
                         </td>
                     </tr>
                     <tr>
-                        <td style="white-space: nowrap;">Tgl/Jam : <span x-text="saleNoteData.waktu"></span></td>
+                        <td style="white-space: nowrap;">Tgl/Jam:<span x-text="saleNoteData.waktu"></span></td>
                     </tr>
                     <tr>
-                        <td style="white-space: nowrap;">Kasir : <span x-text="saleNoteData.kasir"></span></td>
+                        <td style="white-space: nowrap;">Kasir:<span x-text="saleNoteData.kasir"></span></td>
                     </tr>
                 </table>
 
