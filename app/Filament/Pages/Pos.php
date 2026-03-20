@@ -160,7 +160,7 @@ class Pos extends Page
                 : auth()->user()->toko_id;
 
             $newSale = Sale::create([
-                'nomor_transaksi' => 'TRX-' . date('YmdHis'),
+                'nomor_transaksi' => 'TRX-' . date('His') . rand(100, 999),
                 'total_harga' => (float) $this->total,
                 'bayar' => (float) $this->bayar,
                 'kembalian' => (float) $this->bayar - (float) $this->total,
